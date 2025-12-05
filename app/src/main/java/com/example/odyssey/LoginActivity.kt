@@ -1,5 +1,6 @@
 package com.example.odyssey
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +68,7 @@ fun LoginBody() {
     var password by remember { mutableStateOf("") }
     var checkRemember by remember { mutableStateOf(false) }
     var visibility by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Scaffold { padding ->
         Column(
@@ -249,6 +253,18 @@ fun LoginBody() {
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Don't have an account?", color = Color.Gray)
+                        TextButton(onClick = {
+                            context.startActivity(Intent(context, SignUpActivity::class.java))
+                        }) {
+                            Text("Sign Up", color = Color(0xFF3E7BFA), fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
         }
