@@ -44,7 +44,8 @@ fun DashboardBody() {
     val navList = listOf(
         NavItem("Home", R.drawable.baseline_home_24),
         NavItem("Search", R.drawable.baseline_search_24),
-        NavItem("Notification", R.drawable.baseline_notifications_24),
+        NavItem("Create",R.drawable.baseline_add_24),
+        NavItem("Settings", R.drawable.baseline_settings_24),
         NavItem("Profile", R.drawable.baseline_person_24),
     )
 
