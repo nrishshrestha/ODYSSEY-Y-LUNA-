@@ -43,9 +43,9 @@ fun DashboardBody() {
 
     val navList = listOf(
         NavItem("Home", R.drawable.baseline_home_24),
-        NavItem("Search", R.drawable.baseline_search_24),
+        NavItem("Trips", R.drawable.baseline_map_24),
         NavItem("Create",R.drawable.baseline_add_24),
-        NavItem("Settings", R.drawable.baseline_settings_24),
+        NavItem("Friends", R.drawable.baseline_people_24),
         NavItem("Profile", R.drawable.baseline_person_24),
     )
 
@@ -53,6 +53,12 @@ fun DashboardBody() {
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(text = "Odyssey")
+                },
+                navigationIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_arrow_back_ios_new_24),
+                        contentDescription = null
+                    )
                 }
             )
 
