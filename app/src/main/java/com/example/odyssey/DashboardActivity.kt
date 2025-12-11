@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -83,11 +84,18 @@ fun DashboardBody() {
             }
         }
     ) { padding ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(padding))
-        {
-
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            when(selectedItem) {
+                0 -> Text(text = "Home")
+                1 -> Text(text = "Trips")
+                2 -> Text(text = "Create")
+                3 -> Text(text = "Friends")
+                4 -> ProfileScreenBody()
+            }
         }
 
     }
