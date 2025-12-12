@@ -1,5 +1,6 @@
 package com.example.odyssey
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,9 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -39,13 +43,25 @@ fun FriendsScreen(){
                     contentDescription = null,
                     modifier = Modifier.size(30.dp)
                         .clickable{
-
                         }
                 )
             }
         }
         LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f).background(Color.White)) {
 
+        }
+    }
+}
+@Composable
+fun AddChat(img: Int, txt: String){
+    Card(modifier = Modifier.height(60.dp), shape = RoundedCornerShape(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()) {
+            Image(painter = painterResource(img),
+                contentDescription = null, modifier = Modifier.size(40.dp))
+            Text(txt, style = TextStyle(fontSize = 20.sp),
+                modifier = Modifier.padding(horizontal = 12.dp))
         }
     }
 }
