@@ -87,7 +87,14 @@ fun DashboardBody() {
             .fillMaxSize()
             .padding(padding))
         {
-
+            when (selectedItem){
+//                0 ->
+//                1 ->
+//                2 ->
+                3 -> FriendsScreen()
+//                4 ->
+//                else -> HomeScreen()
+            }
         }
 
     }
