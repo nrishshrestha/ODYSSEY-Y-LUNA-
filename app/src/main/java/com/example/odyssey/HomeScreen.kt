@@ -27,7 +27,6 @@ fun HomeScreen() {
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
         item { StatsCard() }
         item { ActionButtons() }
         item { TripsTitle() }
@@ -36,6 +35,7 @@ fun HomeScreen() {
         }
     }
 }
+
 @Composable
 fun StatsCard() {
     Card(
@@ -162,7 +162,6 @@ val sampleTrips = listOf(
     Trip("Everest Base Camp", "Jun 3 • 19 KM • 19 KM"),
     Trip("Annapurna Circuit", "May 21 • 14 KM • 30 KM")
 )
-
 
 @Preview
 @Composable
