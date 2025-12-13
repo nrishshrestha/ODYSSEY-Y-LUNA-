@@ -29,6 +29,7 @@ fun HomeScreen() {
     ) {
 
         item { StatsCard() }
+        item { ActionButtons() }
 
     }
 }
@@ -58,6 +59,61 @@ fun StatItem(value: String, label: String) {
         Text(label, fontSize = 12.sp, color = Color.Gray)
     }
 }
+
+@Composable
+fun ActionButtons() {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedActionButton(
+                text = "Start New Trip",
+                icon = R.drawable.baseline_directions_walk_24
+            )
+            OutlinedActionButton(
+                text = "Add Note",
+                icon = R.drawable.baseline_event_note_24
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedActionButton(
+                text = "Add Photo",
+                icon = R.drawable.baseline_photo_camera_24
+            )
+            OutlinedActionButton(
+                text = "Chat",
+                icon = R.drawable.baseline_chat_24
+            )
+        }
+    }
+}
+
+@Composable
+fun RowScope.OutlinedActionButton(text: String, icon: Int) {
+    OutlinedButton(
+        onClick = {},
+        modifier = Modifier
+            .weight(1f)
+            .height(56.dp),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, Color(0xFFBDBDBD))
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = text,
+            tint = Color.Black
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text, color = Color.Black)
+    }
+}
+
 
 
 
