@@ -30,7 +30,10 @@ fun HomeScreen() {
 
         item { StatsCard() }
         item { ActionButtons() }
-
+        item { TripsTitle() }
+        items(sampleTrips) { trip ->
+            TripCard(trip)
+        }
     }
 }
 @Composable
@@ -115,6 +118,50 @@ fun RowScope.OutlinedActionButton(text: String, icon: Int) {
 }
 
 
+@Composable
+fun TripsTitle() {
+    Text(
+        text = "Your Trips",
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Bold
+    )
+}
+
+@Composable
+fun TripCard(trip: Trip) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .background(Color.LightGray, RoundedCornerShape(12.dp))
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(trip.title, fontWeight = FontWeight.Bold)
+                Text(trip.details, fontSize = 12.sp, color = Color.Gray)
+            }
+        }
+    }
+}
+
+data class Trip(
+    val title: String,
+    val details: String
+)
+
+val sampleTrips = listOf(
+    Trip("Everest Base Camp", "Jun 3 • 19 KM • 19 KM"),
+    Trip("Annapurna Circuit", "May 21 • 14 KM • 30 KM")
+)
 
 
 @Preview
