@@ -38,7 +38,6 @@ class DashboardActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DashboardBody()
-
         }
     }
 }
@@ -62,6 +61,15 @@ fun DashboardBody() {
     Scaffold(
         topBar = {
             TopAppBar(
+                    navigationIcon = {
+                        if (selectedItem != 0) {
+                        IconButton(onClick = { /* handle back */ }) {
+                            Icon(
+                                painter = painterResource(R.drawable.baseline_arrow_back_ios_new_24),
+                                contentDescription = "Back"
+                            ) }
+                        }
+                    },
                 title = { Header() }
             )
         },
