@@ -75,7 +75,7 @@ fun DashboardBody() {
                             )
                         },
                         label = {Text(item.label)},
-                        onClick = {bran
+                        onClick = {
                             selectedItem = index
                         },
                         selected = selectedItem == index
