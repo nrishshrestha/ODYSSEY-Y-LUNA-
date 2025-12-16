@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "818791622802",
+    "project_id": "odyssey-y-luna",
+    "storage_bucket": "odyssey-y-luna.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:818791622802:android:cf018d9a61918ca7bc5e4b",
+        "android_client_info": {
+          "package_name": "com.example.odyssey"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUZ76H40xNVaGbSMZ4t-by_FQNQv2B19Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
