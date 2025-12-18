@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -98,7 +99,7 @@ fun DashboardBody() {
                 .padding(padding)
         ) {
             when(selectedItem) {
-                0 -> Text(text = "Home")
+                0 -> HomeScreen()
                 1 -> Text(text = "Trips")
                 2 -> Text(text = "Create")
                 3 -> Text(text = "Friends")
