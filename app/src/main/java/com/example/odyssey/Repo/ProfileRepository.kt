@@ -1,52 +1,45 @@
-import android.net.Uri
-import com.example.odyssey.model.UserProfile
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.tasks.await
+package com.example.odyssey
 
-class ProfileRepository {
+import com.example.odyssey.model.ProfileModel
 
 
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+interface ProfileRepository {
 
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    // Fetch current user's profile
+    fun getProfile(
+        userId: String,
+        callback: (Boolean, String, ProfileModel?) -> Unit
+    )
 
-    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
+    // Update profile details (name, phone, image, etc.)
+    fun updateProfile(
+        userId: String,
+        userModel: ProfileModel,
+        callback: (Boolean, String) -> Unit
+    )
 
-    suspend fun getUserProfile(): UserProfile? {
+    // Update profile image only
+    fun updateProfileImage(
+        userId: String,
+        imageUrl: String,
+        callback: (Boolean, String) -> Unit
+    )
 
-        val uid = auth.currentUser?.uid ?: return null
+    // Change email
+    fun updateEmail(
+        userId: String,
+        newEmail: String,
+        callback: (Boolean, String) -> Unit
+    )
 
-        return try {
-            val snapshot = firestore
-                .collection("users")
-                .document(uid)
-                .get()
-                .await()
+    // Change password
+    fun updatePassword(
+        newPassword: String,
+        callback: (Boolean, String) -> Unit
+    )
 
-            snapshot.toObject(UserProfile::class.java)
-        } catch (e: Exception) {
-
-            e.printStackTrace()
-            null
-        }
-    }
-
-
-    suspend fun uploadProfileImage(imageUri: Uri): String {
-        return try {
-            val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not logged in")
-            val storageRef = storage.reference.child("profile_pictures/$uid")
-
-
-            storageRef.putFile(imageUri).await()
-
-
-            storageRef.downloadUrl.await().toString()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            throw e
-        }
-    }
+    // Logout user
+    fun logout(
+        callback: (Boolean, String) -> Unit
+    )
 }
