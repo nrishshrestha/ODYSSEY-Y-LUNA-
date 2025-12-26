@@ -8,6 +8,7 @@ data class UserModel(
     val gender: String = "",
     val dob: String = "",
 
+
     ) {
     fun toMap() : Map<String,Any?> {
         return mapOf(
