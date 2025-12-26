@@ -1,6 +1,5 @@
 package com.example.odyssey
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -285,7 +284,7 @@ fun SignUpBody(){
                 ) {
                     Text("Already have an account?", color = Color.Gray)
                     TextButton(onClick = {
-                        context.startActivity(Intent(context, LoginActivity::class.java))
+                        (context as? ComponentActivity)?.finish()
                     }) {
                         Text("Login", color = Color.Blue, fontWeight = FontWeight.Bold)
                     }

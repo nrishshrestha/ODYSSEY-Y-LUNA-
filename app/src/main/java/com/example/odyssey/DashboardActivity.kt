@@ -4,31 +4,49 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
+import com.example.odyssey.ui.theme.ODYSSEYTheme
+
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            DashboardBody()
 
+        setContent {
+            ODYSSEYTheme {
+                androidx.compose.material3.Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.background
+                ) {
+                    DashboardBody()
+                }
+            }
         }
     }
 }
@@ -39,7 +57,7 @@ fun DashboardBody() {
 
     data class NavItem(val label: String, val icon: Int)
 
-    var selectedItem by remember { mutableStateOf(0) }
+    var selectedItem by remember { mutableIntStateOf(0) }
 
     val navList = listOf(
         NavItem("Home", R.drawable.baseline_home_24),
@@ -51,17 +69,18 @@ fun DashboardBody() {
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(text = "Odyssey")
-                },
-                navigationIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.baseline_arrow_back_ios_new_24),
-                        contentDescription = null
-                    )
-                }
+            TopAppBar(
+                    navigationIcon = {
+                        if (selectedItem != 0) {
+                        IconButton(onClick = { /* handle back */ }) {
+                            Icon(
+                                painter = painterResource(R.drawable.baseline_arrow_back_ios_new_24),
+                                contentDescription = "Back"
+                            ) }
+                        }
+                    },
+                title = { Header() }
             )
-
         },
         bottomBar = {
             NavigationBar {
@@ -83,23 +102,49 @@ fun DashboardBody() {
             }
         }
     ) { padding ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(padding))
-        {
-            when (selectedItem){
-//                0 ->
-//                1 ->
-//                2 ->
-                3 -> FriendsScreen()
-//                4 ->
-//                else -> HomeScreen()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            when(selectedItem) {
+                0 -> HomeScreen()
+                1 -> Text(text = "Trips")
+                2 -> Text(text = "Create")
+                3 -> Text(text = "Friends")
+                4 -> ProfileScreenBody()
             }
         }
-
     }
 }
 
+@Composable
+fun Header() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text("ODYSSEY", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("Let’s Travel", fontSize = 14.sp, color = Color.Gray)
+        }
+        Row {
+            IconButton(onClick = {})  {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_search_24),
+                    contentDescription = "Search"
+                )
+            }
+            IconButton(onClick = {}) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_notifications_24),
+                    contentDescription = "Notifications"
+                )
+            }
+        }
+    }
+}
 
 @Preview
 @Composable
