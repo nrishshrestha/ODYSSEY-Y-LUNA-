@@ -102,13 +102,6 @@ fun LoginBody() {
                 color = Color(0xFF3460FB),
                 textAlign = TextAlign.Center
             )
-            Text("It was popularized in the 1960s with the release of Letraset sheetscontaining Lorem Ipsum",
-                modifier = Modifier.fillMaxWidth()
-                    .padding(horizontal = 15.dp, vertical = 20.dp),
-                fontSize = 15.sp,
-                color = Color(0xFF000000).copy(0.5f),
-                textAlign = TextAlign.Center
-            )
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 30.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -179,20 +172,19 @@ fun LoginBody() {
                     unfocusedIndicatorColor = Color.Transparent
                 )
             )
-//
-//            Text(
-//                "Forgot Password?",
-//                style = TextStyle(
-//                    color = Color(0xFF3460FB),
-//                    textAlign = TextAlign.End
-//                ),
-//                modifier = Modifier
-//                    .padding(horizontal = 15.dp, vertical = 10.dp).clickable {
-//                        val intent = Intent(context, ForgetPasswordActivity::class.java)
-//                        context.startActivity(intent)
-//
-//                    },
-//            )
+            Text(
+                "Forgot Password?",
+                style = TextStyle(
+                    color = Color(0xFF3460FB),
+                    textAlign = TextAlign.End
+                ),
+                modifier = Modifier
+                    .padding(horizontal = 15.dp, vertical = 10.dp).clickable {
+                        val intent = Intent(context, ForgetPasswordActivity::class.java)
+                        context.startActivity(intent)
+
+                    },
+            )
             Spacer(modifier = Modifier.height(25.dp))
 
             Button(onClick = {
