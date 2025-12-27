@@ -7,6 +7,7 @@ data class UserModel(
     val email: String = "",
     val gender: String = "",
     val dob: String = "",
+    var imageUrl : String = "",
 
     ) {
     fun toMap() : Map<String,Any?> {
@@ -17,6 +18,7 @@ data class UserModel(
             "email" to email,
             "gender" to gender,
             "dob" to dob,
+            "imageUrl" to imageUrl,
         )
     }
 }

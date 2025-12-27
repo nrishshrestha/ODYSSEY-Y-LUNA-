@@ -77,21 +77,21 @@ class UserRepoImpl : UserRepository {
         userId: String,
         callback: (Boolean, String, UserModel?) -> Unit
     ) {
-        ref.child(userId).addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                var allUsers = mutableListOf<UserModel>()
-                for(data in snapshot.children) {
-                    val user = data.getValue(UserModel::class.java)
-                    if (user != null) {
-                        allUsers.add(user)
+        ref.child(userId)
+            .addValueEventListener(object: ValueEventListener{
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if(snapshot.exists()){
+                        val user= snapshot.getValue(UserModel::class.java)
+                        if(user!=null){
+                            callback(true,"Profile fetched",user)
+                        }
                     }
                 }
-            }
 
-            override fun onCancelled(error: DatabaseError) {
-                callback(false, error.message, null)
-            }
-        })
+                override fun onCancelled(error: DatabaseError) {
+                    callback(false,"${error.message}",null)
+                }
+            })
     }
 
     override fun getAllUser(callback: (Boolean, String, List<UserModel?>) -> Unit) {
