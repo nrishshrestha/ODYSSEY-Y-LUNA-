@@ -99,7 +99,6 @@ fun LoginBody() {
                 color = Color(0xFF3460FB),
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(25.dp))
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 30.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -170,7 +169,6 @@ fun LoginBody() {
                     unfocusedIndicatorColor = Color.Transparent
                 )
             )
-
             Text(
                 "Forgot Password?",
                 style = TextStyle(
@@ -178,11 +176,11 @@ fun LoginBody() {
                     textAlign = TextAlign.End
                 ),
                 modifier = Modifier
-//                    .padding(horizontal = 15.dp, vertical = 10.dp).clickable {
-//                        val intent = Intent(context, ForgetPasswordActivity::class.java)
-//                        context.startActivity(intent)
-//
-//                    },
+                    .padding(horizontal = 15.dp, vertical = 10.dp).clickable {
+                        val intent = Intent(context, ForgetPasswordActivity::class.java)
+                        context.startActivity(intent)
+
+                    },
             )
             Spacer(modifier = Modifier.height(25.dp))
 
