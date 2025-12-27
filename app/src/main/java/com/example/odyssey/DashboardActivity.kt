@@ -20,6 +20,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +32,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import com.example.odyssey.ViewModel.ProfileViewModel
 import com.example.odyssey.ui.theme.ODYSSEYTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.odyssey.HomeScreen
+import com.example.odyssey.ProfileScreen
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,7 +49,8 @@ class DashboardActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = androidx.compose.material3.MaterialTheme.colorScheme.background
                 ) {
-                    DashboardBody()
+                    val profileViewModel: ProfileViewModel = viewModel()
+                    DashboardBody(profileViewModel)
                 }
             }
         }
@@ -53,7 +59,7 @@ class DashboardActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardBody() {
+fun DashboardBody(profileViewModel: ProfileViewModel) {
 
     data class NavItem(val label: String, val icon: Int)
 
@@ -66,6 +72,7 @@ fun DashboardBody() {
         NavItem("Friends", R.drawable.baseline_people_24),
         NavItem("Profile", R.drawable.baseline_person_24),
     )
+    val userModel by profileViewModel.user.collectAsState()
 
     Scaffold(
         topBar = {
@@ -112,7 +119,9 @@ fun DashboardBody() {
                 1 -> Text(text = "Trips")
                 2 -> Text(text = "Create")
                 3 -> Text(text = "Friends")
-                4 -> ProfileScreenBody()
+                4 -> {
+                    ProfileScreen(profileViewModel = profileViewModel)
+                }
             }
         }
     }
@@ -146,8 +155,8 @@ fun Header() {
     }
 }
 
-@Preview
-@Composable
-fun DashboardPreview() {
-    DashboardBody()
-}
+//@Preview
+//@Composable
+//fun DashboardPreview() {
+//    DashboardBody(profileViewModel)
+//}
