@@ -1,8 +1,9 @@
 package com.example.odyssey.model
 
 data class FriendModel(
-    val id: String = "",           // Unique id for this friend relation (could be a document id)
-    val userId: String = "",       // Current user id
-    val friendId: String = "",     // Friend user id
-    val status: String = "pending" // Status of the friend relation (e.g., "pending", "accepted", "rejected")
+    val id: String = "",          // Firebase key for this relation
+    val fromUserId: String = "",  // Who sent the request
+    val toUserId: String = "",    // Who receives the request
+    val status: String = "pending", // "pending" | "accepted"
+    val createdAt: Long = 0L      // System.currentTimeMillis()
 )
