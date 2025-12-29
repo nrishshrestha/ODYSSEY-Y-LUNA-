@@ -5,7 +5,7 @@ import com.example.odyssey.model.UserModel
 import com.google.firebase.database.*
 
 class FriendRepoImpl(
-    private val userRepository: UserRepository? = null
+    private val userRepo: UserRepo? = null
 ) : FriendRepo {
 
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
@@ -187,7 +187,7 @@ class FriendRepoImpl(
         userId: String,
         callback: (Boolean, String, List<UserModel?>) -> Unit
     ) {
-        if (userRepository == null) {
+        if (userRepo == null) {
             callback(false, "UserRepository not provided", emptyList())
             return
         }
@@ -216,7 +216,7 @@ class FriendRepoImpl(
             var errorMessage = ""
 
             friendIds.forEach { fid ->
-                userRepository.getUserByID(fid) { ok, msg2, user ->
+                userRepo.getUserByID(fid) { ok, msg2, user ->
                     completed++
 
                     if (!ok && !anyError) {

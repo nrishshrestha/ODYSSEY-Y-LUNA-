@@ -4,9 +4,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.odyssey.model.UserModel
-import com.example.odyssey.repository.UserRepository
+import com.example.odyssey.repository.UserRepo
 
-class UserViewModel (val repository: UserRepository) : ViewModel(){
+class UserViewModel (val repository: UserRepo) : ViewModel(){
     private val _user = MutableLiveData<UserModel?>()
     val user: LiveData<UserModel?>
         get() = _user

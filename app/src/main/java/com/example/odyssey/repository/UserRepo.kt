@@ -2,7 +2,7 @@ package com.example.odyssey.repository
 
 import com.example.odyssey.model.UserModel
 
-interface UserRepository {
+interface UserRepo {
     fun login(email:String,password:String,callback:(Boolean,String) -> Unit)
 
     fun register(email:String,password:String,callback:(Boolean,String,String) -> Unit)
