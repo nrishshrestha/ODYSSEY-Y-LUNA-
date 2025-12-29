@@ -89,8 +89,8 @@ class FriendRepoImpl(
     }
 
     override fun removeFriend(
-        currentUserId: String,
-        otherUserId: String,
+        userId: String,
+        friendId: String,
         callback: (Boolean, String) -> Unit
     ) {
         // Look up any accepted relation between the two users and delete it
@@ -103,8 +103,8 @@ class FriendRepoImpl(
                     if (model != null &&
                         model.status == "accepted" &&
                         (
-                                (model.fromUserId == currentUserId && model.toUserId == otherUserId) ||
-                                        (model.fromUserId == otherUserId && model.toUserId == currentUserId)
+                                (model.fromUserId == userId && model.toUserId == friendId) ||
+                                        (model.fromUserId == friendId && model.toUserId == userId)
                                 )
                     ) {
                         targetKey = model.id
@@ -117,7 +117,7 @@ class FriendRepoImpl(
                     return
                 }
 
-                ref.child(targetKey!!).removeValue().addOnCompleteListener {
+                ref.child(targetKey).removeValue().addOnCompleteListener {
                     if (it.isSuccessful) {
                         callback(true, "Friend removed")
                     } else {
