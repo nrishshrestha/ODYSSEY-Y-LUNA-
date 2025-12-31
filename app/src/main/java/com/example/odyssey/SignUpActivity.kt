@@ -325,11 +325,11 @@ fun SignUpBody() {
                                 "please agree to terms &  conditions",
                                 Toast.LENGTH_SHORT
                             ).show()
-                        } else {
-                            userViewModel.register(email.trim(), password.trim()) {
+                        }else{
+                            userViewModel.register(email.trim(),password.trim()) {
                                     success, message, userId ->
-                                if (success) {
-                                    val model = UserModel(
+                                if(success) {
+                                    var model = UserModel(
                                         userId = userId,
                                         firstName = firstName,
                                         lastName = lastName,
@@ -337,12 +337,30 @@ fun SignUpBody() {
                                         email = email,
                                         dob = selectDate
                                     )
-                                    userViewModel.addUserToDatabase(userId, model) {
-                                            s, msg ->
-                                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                    userViewModel.addUserToDatabase(
+                                        userId,model
+                                    ) {
+                                            success,message ->
+                                        if(success) {
+                                            Toast.makeText(
+                                                context,
+                                                message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }else {
+                                            Toast.makeText(
+                                                context,
+                                                message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
                                     }
-                                } else {
-                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                }else{
+                                    Toast.makeText(
+                                        context,
+                                        message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             }
                         }
