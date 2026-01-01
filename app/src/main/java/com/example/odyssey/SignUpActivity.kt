@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -82,11 +83,10 @@ class SignUpActivity : ComponentActivity() {
 }
 
 @Composable
-fun SignUpBody(){
+fun SignUpBody() {
 
-
-    var firstName by remember {mutableStateOf("")}
-    var lastName by remember {mutableStateOf("")}
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var visibility by remember { mutableStateOf(false) }
@@ -100,6 +100,7 @@ fun SignUpBody(){
     val activity = context as Activity
     val userViewModel = remember { UserViewModel(UserRepoImpl()) }
     val options = listOf("Male", "Female")
+
     val calendar = Calendar.getInstance()
     val year = calendar.get(Calendar.YEAR)
     val month = calendar.get(Calendar.MONTH)
@@ -112,304 +113,294 @@ fun SignUpBody(){
         }, year, month, day
     )
 
+    Scaffold(
+        containerColor = Color(0xFF4A7CFF)
+    ) { padding ->
 
-    Scaffold { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
+            contentAlignment = Alignment.Center
         ) {
-            Spacer(modifier = Modifier.height(75.dp))
-            Text("Sign Up",
-                modifier = Modifier.fillMaxWidth(),
-                fontWeight = FontWeight.Bold,
-                fontSize = 35.sp,
-                color = Color(0xFF3460FB),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(15.dp))
 
-            OutlinedTextField(
-                value = firstName,
-                onValueChange = {data ->
-                    firstName = data
-                },
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 15.dp),
-                shape = RoundedCornerShape(15.dp),
-                placeholder = {
-                    Text("First Name")
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text
-                ),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFFDFDFD),
-                    unfocusedContainerColor = Color(0xFFDFE0EB),
-                    focusedIndicatorColor = Color(0xFF596096),
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            OutlinedTextField(
-                value = lastName,
-                onValueChange = {data ->
-                    lastName = data
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 15.dp),
-                shape = RoundedCornerShape(15.dp),
-                placeholder = {
-                    Text("Last Name")
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text
-                ),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFFDFDFD),
-                    unfocusedContainerColor = Color(0xFFDFE0EB),
-                    focusedIndicatorColor = Color(0xFF596096),
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            OutlinedTextField(
-                value = email,
-                onValueChange = { data ->
-                    email = data
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 15.dp),
-                shape = RoundedCornerShape(15.dp),
-                placeholder = {
-                    Text("example@gmail.com")
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email
-                ),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFFDFDFD),
-                    unfocusedContainerColor = Color(0xFFDFE0EB),
-                    focusedIndicatorColor = Color(0xFF596096),
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = { data ->
-                    password = data
-                },
-                trailingIcon = {
-                    IconButton (onClick = {
-                        visibility = !visibility
-                    }) {
-                        Icon(
-                            painter = if (visibility)
-                                painterResource(R.drawable.baseline_visibility_off_24)
-                            else
-                                painterResource(R.drawable.baseline_visibility_24),
-                            contentDescription = null
-                        )
-                    }
-                },
-                visualTransformation = if (visibility) VisualTransformation.None else PasswordVisualTransformation(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 15.dp),
-                shape = RoundedCornerShape(15.dp),
-                placeholder = {
-                    Text("*********")
-                },
-
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFF8F6FC),
-                    unfocusedContainerColor = Color(0xFFDDDEE9),
-                    focusedIndicatorColor = Color(0xFF596096),
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            OutlinedTextField(
-                enabled = false,
-                value = selectDate,
-                onValueChange = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 15.dp)
-                    .clickable {
-                        datepicker.show()
-                    },
-                shape = RoundedCornerShape(15.dp),
-                placeholder = {
-                    Text("Select Date")
-                },
-                colors = TextFieldDefaults.colors(
-                    disabledTextColor = Color.Black,
-                    focusedContainerColor = Color(0xFFDDDEE9),
-                    unfocusedContainerColor = Color(0xFFDDDEE9),
-                    disabledContainerColor = Color(0xFFDDDEE9),
-                    focusedIndicatorColor = Color(0xFF596096),
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 15.dp)
+                    .padding(horizontal = 20.dp)
+                    .background(Color.White, RoundedCornerShape(30.dp))
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
+                Text(
+                    text = "Sign Up",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF3460FB)
+                )
+
+                Text(
+                    text = "Welcome to ODYSSEY",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(25.dp))
+
+                // First Name
                 OutlinedTextField(
-                    value = selectedOptionText,
+                    value = firstName,
+                    onValueChange = { firstName = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(50.dp),
+                    placeholder = { Text("First Name") },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedIndicatorColor = Color(0xFFE0E6FF),
+                        unfocusedIndicatorColor = Color(0xFFE0E6FF)
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Last Name
+                OutlinedTextField(
+                    value = lastName,
+                    onValueChange = { lastName = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(50.dp),
+                    placeholder = { Text("Last Name") },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedIndicatorColor = Color(0xFFE0E6FF),
+                        unfocusedIndicatorColor = Color(0xFFE0E6FF)
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Email
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(50.dp),
+                    placeholder = { Text("example@gmail.com") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedIndicatorColor = Color(0xFFE0E6FF),
+                        unfocusedIndicatorColor = Color(0xFFE0E6FF)
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Password
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(50.dp),
+                    placeholder = { Text("Password") },
+                    trailingIcon = {
+                        IconButton(onClick = { visibility = !visibility }) {
+                            Icon(
+                                painter = if (visibility)
+                                    painterResource(R.drawable.baseline_visibility_off_24)
+                                else painterResource(R.drawable.baseline_visibility_24),
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    visualTransformation =
+                        if (visibility) VisualTransformation.None else PasswordVisualTransformation(),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedIndicatorColor = Color(0xFFE0E6FF),
+                        unfocusedIndicatorColor = Color(0xFFE0E6FF)
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Date Picker
+                OutlinedTextField(
+                    value = selectDate,
                     onValueChange = {},
+                    enabled = false,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .onGloballyPositioned { coordinates ->
-                            textFieldSize = coordinates.size.toSize()
-                        }
-                        .clickable {
-                            expanded = true
-                        },
-                    shape = RoundedCornerShape(15.dp),
-                    placeholder = {
-                        Text("Select Gender")
-                    },
-                    enabled = false,
-                    trailingIcon = {
-                        Icon(
-                            painter = if (expanded)
-                                painterResource(R.drawable.outline_keyboard_arrow_up_24)
-                            else
-                                painterResource(R.drawable.baseline_keyboard_arrow_down_24),
-                            contentDescription = null
-                        )
-                    },
+                        .clickable { datepicker.show() },
+                    shape = RoundedCornerShape(50.dp),
+                    placeholder = { Text("Select Date") },
                     colors = TextFieldDefaults.colors(
+                        disabledContainerColor = Color.White,
                         disabledTextColor = Color.Black,
-                        focusedContainerColor = Color(0xFFDDDEE9),
-                        unfocusedContainerColor = Color(0xFFDDDEE9),
-                        disabledContainerColor = Color(0xFFDDDEE9),
-                        focusedIndicatorColor = Color(0xFF596096),
-                        unfocusedIndicatorColor = Color.Transparent
+                        unfocusedIndicatorColor = Color(0xFFE0E6FF)
                     )
                 )
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier
-                        .width(with(LocalDensity.current) {textFieldSize.width.toDp()})
-                ) { options.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(text = option) },
-                        onClick = {
-                            selectedOptionText = option
-                            expanded = false
-                        }
-                    )
-                }
-                }
-            }
-            Spacer(modifier = Modifier.height(5.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = terms,
-                    onCheckedChange = {
-                        terms = it
-                    },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = Color(0xFF596096),
-                        checkmarkColor = Color.White
-                    )
-                )
-                Text("I agree to the terms and conditions")
-            }
-            Spacer(modifier = Modifier.height(25.dp))
 
-            Button(
-                onClick = {
-                    if (!terms) {
-                        Toast.makeText(
-                            context,
-                            "please agree to terms &  conditions",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }else{
-                        userViewModel.register(email.trim(),password.trim()) {
-                                success, message, userId ->
-                            if(success) {
-                                var model = UserModel(
-                                    userId = userId,
-                                    firstName = firstName,
-                                    lastName = lastName,
-                                    gender = selectedOptionText,
-                                    email = email,
-                                    dob = selectDate
-                                )
-                                userViewModel.addUserToDatabase(
-                                    userId,model
-                                ) {
-                                        success,message ->
-                                    if(success) {
-                                        Toast.makeText(
-                                            context,
-                                            message,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }else {
-                                        Toast.makeText(
-                                            context,
-                                            message,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Gender Dropdown
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = selectedOptionText,
+                        onValueChange = {},
+                        enabled = false,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onGloballyPositioned {
+                                textFieldSize = it.size.toSize()
+                            }
+                            .clickable { expanded = true },
+                        shape = RoundedCornerShape(50.dp),
+                        trailingIcon = {
+                            Icon(
+                                painter = painterResource(
+                                    if (expanded)
+                                        R.drawable.outline_keyboard_arrow_up_24
+                                    else R.drawable.baseline_keyboard_arrow_down_24
+                                ),
+                                contentDescription = null
+                            )
+                        },
+                        placeholder = { Text("Select Gender") },
+                        colors = TextFieldDefaults.colors(
+                            disabledContainerColor = Color.White,
+                            disabledTextColor = Color.Black,
+                            unfocusedIndicatorColor = Color(0xFFE0E6FF)
+                        )
+                    )
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier.width(
+                            with(LocalDensity.current) {
+                                textFieldSize.width.toDp()
+                            }
+                        )
+                    ) {
+                        options.forEach {
+                            DropdownMenuItem(
+                                text = { Text(it) },
+                                onClick = {
+                                    selectedOptionText = it
+                                    expanded = false
                                 }
-                            }else{
-                                Toast.makeText(
-                                    context,
-                                    message,
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Terms
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = terms,
+                        onCheckedChange = { terms = it },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = Color(0xFF3460FB)
+                        )
+                    )
+                    Text("I agree to the term and condition", fontSize = 13.sp)
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Register Button (LOGIC UNCHANGED)
+                Button(
+                    onClick = {
+                        if (!terms) {
+                            Toast.makeText(
+                                context,
+                                "please agree to terms &  conditions",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }else{
+                            userViewModel.register(email.trim(),password.trim()) {
+                                    success, message, userId ->
+                                if(success) {
+                                    var model = UserModel(
+                                        userId = userId,
+                                        firstName = firstName,
+                                        lastName = lastName,
+                                        gender = selectedOptionText,
+                                        email = email,
+                                        dob = selectDate
+                                    )
+                                    userViewModel.addUserToDatabase(
+                                        userId,model
+                                    ) {
+                                            success,message ->
+                                        if(success) {
+                                            Toast.makeText(
+                                                context,
+                                                message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }else {
+                                            Toast.makeText(
+                                                context,
+                                                message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }else{
+                                    Toast.makeText(
+                                        context,
+                                        message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
                         }
-                    }
-                }, modifier = Modifier
-                    .padding(horizontal = 15.dp)
-                    .fillMaxWidth()
-                    .height(60.dp),
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = Color.White, containerColor = Color.Blue
-                ),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("Sign Up", style = TextStyle(fontSize = 20.sp))
-            }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    shape = RoundedCornerShape(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF3460FB)
+                    )
+                ) {
+                    Text("Register", fontSize = 16.sp)
+                }
 
-            Text(
-                text = buildAnnotatedString {
-                    append("Already have an account? ")
-                    withStyle(style = SpanStyle(color = Color(0xFF3460FB), fontWeight = FontWeight.Bold)) {
-                        append("Login")
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(15.dp)
-                    .clickable {
-                        val intent = Intent(context, LoginActivity::class.java)
-                        context.startActivity(intent)
+                Spacer(modifier = Modifier.height(15.dp))
+
+                Text(
+                    text = buildAnnotatedString {
+                        append("Already have an account? ")
+                        withStyle(
+                            SpanStyle(
+                                color = Color(0xFF3460FB),
+                                fontWeight = FontWeight.Bold
+                            )
+                        ) {
+                            append("Login")
+                        }
+                    },
+                    modifier = Modifier.clickable {
+                        context.startActivity(Intent(context, LoginActivity::class.java))
                         activity.finish()
                     },
-                textAlign = TextAlign.Center
-            )
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
+
 
 @Preview
 @Composable
