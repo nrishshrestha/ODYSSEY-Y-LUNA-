@@ -1,6 +1,10 @@
 package com.example.odyssey.repository
 
+
+import android.content.Context
+import android.net.Uri
 import com.example.odyssey.model.UserModel
+import com.example.odyssey.utils.CloudinaryManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -54,7 +58,10 @@ class UserRepoImpl : UserRepository {
                 if (it.isSuccessful) {
                     callback(true, "Verification email sent to $email")
                 } else {
-                    callback(false, it.exception?.message ?: "Unknown error sending password reset email")
+                    callback(
+                        false,
+                        it.exception?.message ?: "Unknown error sending password reset email"
+                    )
                 }
             }
     }
@@ -78,18 +85,18 @@ class UserRepoImpl : UserRepository {
         callback: (Boolean, String, UserModel?) -> Unit
     ) {
         ref.child(userId)
-            .addValueEventListener(object: ValueEventListener{
+            .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    if(snapshot.exists()){
-                        val user= snapshot.getValue(UserModel::class.java)
-                        if(user!=null){
-                            callback(true,"Profile fetched",user)
+                    if (snapshot.exists()) {
+                        val user = snapshot.getValue(UserModel::class.java)
+                        if (user != null) {
+                            callback(true, "Profile fetched", user)
                         }
                     }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    callback(false,"${error.message}",null)
+                    callback(false, "${error.message}", null)
                 }
             })
     }
@@ -140,5 +147,44 @@ class UserRepoImpl : UserRepository {
                 callback(false, it.exception?.message ?: "Failed to delete account")
             }
         }
+    }
+
+    override fun uploadImageToCloudinary(context: Context, imageUri: Uri) {
+        android.util.Log.d("UserRepoImpl", "=== Starting upload process ===")
+        CloudinaryManager.uploadImage(
+            context,
+            imageUri,
+            onSuccess = { imageUrl ->
+                android.util.Log.d("UserRepoImpl", "Cloudinary success! URL: $imageUrl")
+                updateProfileImage(imageUrl)
+            },
+            onError = { exception ->
+                android.util.Log.e(
+                    "UserRepoImpl",
+                    "Cloudinary upload failed: ${exception.message}",
+                    exception
+                )
+            }
+        )
+    }
+
+    override fun updateProfileImage(imageUrl: String) {
+        android.util.Log.d("UserRepoImpl", "=== Updating Firebase ===")
+        val userId = auth.currentUser?.uid
+        android.util.Log.d("UserRepoImpl", "User ID: $userId")
+        android.util.Log.d("UserRepoImpl", "Image URL: $imageUrl")
+
+        if (userId != null) {
+            ref.child(userId).child("imageUrl").setValue(imageUrl)
+                .addOnSuccessListener {
+                    android.util.Log.d("UserRepoImpl", "Firebase imageUrl updated successfully!")
+                }
+                .addOnFailureListener { e ->
+                    android.util.Log.e("UserRepoImpl", "Failed to update imageUrl: ${e.message}", e)
+                }
+        } else {
+            android.util.Log.e("UserRepoImpl", "No user logged in!")
+        }
+
     }
 }
