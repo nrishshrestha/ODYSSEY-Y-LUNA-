@@ -1,9 +1,13 @@
 package com.example.odyssey.ViewModel
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.odyssey.model.UserModel
+import com.example.odyssey.repository.UserRepoImpl
+import com.example.odyssey.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,10 +18,17 @@ import kotlinx.coroutines.tasks.await
 class ProfileViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val database = FirebaseDatabase.getInstance().getReference("User")
+    private val userRepository: UserRepository = UserRepoImpl()
 
     // Use a StateFlow to hold the user data, so Composables can observe it
     private val _user = MutableStateFlow<UserModel?>(null)
     val user: StateFlow<UserModel?> = _user
+
+    private val _uploading = MutableStateFlow(false)
+    val uploading: StateFlow<Boolean> = _uploading
+
+    private val _uploadError = MutableStateFlow<String?>(null)
+    val uploadError: StateFlow<String?> = _uploadError
 
     init {
         fetchCurrentUser()
@@ -27,35 +38,69 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch {
             val userId = auth.currentUser?.uid
             if (userId != null) {
-                // 2. LOG THAT WE HAVE A USER ID
                 Log.d("ProfileViewModel", "User is logged in. Fetching data for UID: $userId")
                 try {
                     val snapshot = database.child(userId).get().await()
 
-                    if (snapshot.exists()) { // <-- 3. ADD A CHECK TO SEE IF DATA EXISTS
+                    if (snapshot.exists()) {
                         val userModel = snapshot.getValue(UserModel::class.java)
                         if (userModel != null) {
                             _user.value = userModel
-                            // 4. LOG SUCCESS
-                            Log.d("ProfileViewModel", "Successfully fetched and parsed user data: ${userModel.email}")
+                            Log.d(
+                                "ProfileViewModel",
+                                "Successfully fetched user data. ImageUrl: ${userModel.imageUrl}"
+                            )
                         } else {
-                            // 5. LOG PARSING FAILURE
-                            Log.e("ProfileViewModel", "Failed to parse snapshot into UserModel. Check data structure.")
+                            Log.e(
+                                "ProfileViewModel",
+                                "Failed to parse snapshot into UserModel. Check data structure."
+                            )
                         }
                     } else {
-                        // 6. LOG THAT NO DATA WAS FOUND AT THE PATH
-                        Log.e("ProfileViewModel", "No data found at database path for user: $userId")
+                        Log.e(
+                            "ProfileViewModel",
+                            "No data found at database path for user: $userId"
+                        )
                     }
-
                 } catch (e: Exception) {
-                    // 7. LOG ANY OTHER EXCEPTIONS
                     Log.e("ProfileViewModel", "An error occurred while fetching user data.", e)
-                    _user.value = null // Or set an error state
+                    _user.value = null
                 }
             } else {
-                // 8. LOG THAT NO USER IS LOGGED IN
-                Log.d("ProfileViewModel", "No user is currently logged in. (auth.currentUser is null)")
+                Log.d(
+                    "ProfileViewModel",
+                    "No user is currently logged in. (auth.currentUser is null)"
+                )
             }
         }
+    }
+
+    // Profile image upload
+    fun uploadProfileImage(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _uploading.value = true
+            _uploadError.value = null
+
+            try {
+                Log.d("ProfileViewModel", "Starting image upload")
+                userRepository.uploadImageToCloudinary(context, uri)
+                Log.d("ProfileViewModel", "Image upload complete, refreshing user data")
+
+                // Refresh user data to get the new image URL
+                fetchCurrentUser()
+
+                Log.d("ProfileViewModel", "Upload successful")
+            } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Upload failed: ${e.message}", e)
+                _uploadError.value = e.message ?: "Upload failed"
+            } finally {
+                _uploading.value = false
+            }
         }
+    }
+
+    // Optional: Method to manually refresh user data
+    fun refreshUserData() {
+        fetchCurrentUser()
+    }
 }
