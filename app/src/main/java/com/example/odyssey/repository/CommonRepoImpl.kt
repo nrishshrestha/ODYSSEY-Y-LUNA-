@@ -14,9 +14,9 @@ import java.util.concurrent.Executors
 class CommonRepoImpl : CommonRepo {
     private val cloudinary = Cloudinary(
         mapOf(
-            "cloud_name" to "dcziz2jph",
-            "api_key" to "848824443995533",
-            "api_secret" to "U3CdJDfCSDYR3Aslz9WrFJ2oGE0"
+            "cloud_name" to "dk1890isv",
+            "api_key" to "942831957246931",
+            "api_secret" to "JkqrP4BXgpuDRHNDddvwWsZc_lg"
         )
     )
 
