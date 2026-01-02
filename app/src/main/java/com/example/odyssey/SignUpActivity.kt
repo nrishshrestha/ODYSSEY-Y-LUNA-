@@ -92,6 +92,7 @@ fun SignUpBody() {
     var visibility by remember { mutableStateOf(false) }
     var terms by remember { mutableStateOf(false) }
     var selectDate by remember { mutableStateOf("") }
+    var imageUrl by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     var selectedOptionText by remember { mutableStateOf("Select Gender") }
     var textFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
@@ -335,7 +336,8 @@ fun SignUpBody() {
                                         lastName = lastName,
                                         gender = selectedOptionText,
                                         email = email,
-                                        dob = selectDate
+                                        dob = selectDate,
+                                        imageUrl = ""
                                     )
                                     userViewModel.addUserToDatabase(
                                         userId,model
