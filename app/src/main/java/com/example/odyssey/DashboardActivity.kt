@@ -32,11 +32,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.odyssey.ViewModel.ProfileViewModel
 import com.example.odyssey.ui.theme.ODYSSEYTheme
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.odyssey.HomeScreen
-import com.example.odyssey.ProfileScreen
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,6 +47,7 @@ class DashboardActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = androidx.compose.material3.MaterialTheme.colorScheme.background
                 ) {
+                    // Create ViewModel at Activity scope so it persists across navigation
                     val profileViewModel: ProfileViewModel = viewModel()
                     DashboardBody(profileViewModel)
                 }
@@ -68,7 +67,7 @@ fun DashboardBody(profileViewModel: ProfileViewModel) {
     val navList = listOf(
         NavItem("Home", R.drawable.baseline_home_24),
         NavItem("Trips", R.drawable.baseline_map_24),
-        NavItem("Create",R.drawable.baseline_add_24),
+        NavItem("Create", R.drawable.baseline_add_24),
         NavItem("Friends", R.drawable.baseline_people_24),
         NavItem("Profile", R.drawable.baseline_person_24),
     )
@@ -77,15 +76,16 @@ fun DashboardBody(profileViewModel: ProfileViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                    navigationIcon = {
-                        if (selectedItem != 0) {
+                navigationIcon = {
+                    if (selectedItem != 0) {
                         IconButton(onClick = { /* handle back */ }) {
                             Icon(
                                 painter = painterResource(R.drawable.baseline_arrow_back_ios_new_24),
                                 contentDescription = "Back"
-                            ) }
+                            )
                         }
-                    },
+                    }
+                },
                 title = { Header() }
             )
         },
@@ -99,7 +99,7 @@ fun DashboardBody(profileViewModel: ProfileViewModel) {
                                 contentDescription = null
                             )
                         },
-                        label = {Text(item.label)},
+                        label = { Text(item.label) },
                         onClick = {
                             selectedItem = index
                         },
@@ -114,12 +114,13 @@ fun DashboardBody(profileViewModel: ProfileViewModel) {
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            when(selectedItem) {
+            when (selectedItem) {
                 0 -> HomeScreen()
                 1 -> Text(text = "Trips")
                 2 -> Text(text = "Create")
                 3 -> Text(text = "Friends")
                 4 -> {
+                    // Pass the same ViewModel instance
                     ProfileScreen(profileViewModel = profileViewModel)
                 }
             }
@@ -136,10 +137,10 @@ fun Header() {
     ) {
         Column {
             Text("ODYSSEY", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Text("Let’s Travel", fontSize = 14.sp, color = Color.Gray)
+            Text("Let's Travel", fontSize = 14.sp, color = Color.Gray)
         }
         Row {
-            IconButton(onClick = {})  {
+            IconButton(onClick = {}) {
                 Icon(
                     painter = painterResource(id = R.drawable.baseline_search_24),
                     contentDescription = "Search"
@@ -154,9 +155,3 @@ fun Header() {
         }
     }
 }
-
-//@Preview
-//@Composable
-//fun DashboardPreview() {
-//    DashboardBody(profileViewModel)
-//}
