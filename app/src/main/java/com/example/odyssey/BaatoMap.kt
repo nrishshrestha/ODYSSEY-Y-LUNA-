@@ -32,7 +32,7 @@ fun BaatoMap(
 
                     mapboxMap.setStyle(
                         Style.Builder().fromUri(
-                            "https://api.baato.io/api/v1/styles/baato-dark?key=YOUR_BAATO_API_KEY"
+                            "https://api.baato.io/api/v1/styles/baato-dark?key=bpk.GUTSn6p8o-LVyDlQOu-S7HLs2gQgI5Y6zkvoAGVlDXMD"
                         )
                     )
                 }
