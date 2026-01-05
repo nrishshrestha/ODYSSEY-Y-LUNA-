@@ -1,5 +1,7 @@
 package com.example.odyssey.repository
 
+import android.content.Context
+import android.net.Uri
 import com.example.odyssey.model.UserModel
 
 interface UserRepo {
@@ -18,4 +20,6 @@ interface UserRepo {
     fun editProfile(userId: String,model: UserModel,callback: (Boolean, String) -> Unit)
 
     fun deleteAccount(userId: String,callback: (Boolean, String) -> Unit)
+    fun uploadImageToCloudinary(context: Context, imageUri: Uri)
+    fun updateProfileImage(imageUrl: String)
 }

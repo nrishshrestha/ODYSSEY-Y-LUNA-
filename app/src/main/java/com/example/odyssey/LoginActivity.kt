@@ -7,7 +7,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -84,157 +86,198 @@ fun LoginBody() {
     val context = LocalContext.current
     val activity = context as Activity
 
+    Scaffold(
+        containerColor = Color(0xFF4A7CFF)
+    ) { padding ->
 
-    Scaffold {padding->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
+            contentAlignment = Alignment.Center
         ) {
-            Spacer(modifier = Modifier.height(75.dp))
-            Text("Login",
-                modifier = Modifier.fillMaxWidth(),
-                fontWeight = FontWeight.Bold,
-                fontSize = 35.sp,
-                color = Color(0xFF3460FB),
-                textAlign = TextAlign.Center
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 30.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f)
-                )
-                Text("Or", modifier = Modifier.padding(horizontal = 15.dp))
 
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            OutlinedTextField(
-                value = email,
-                onValueChange = { data ->
-                    email = data
-                },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp),
-                shape = RoundedCornerShape(15.dp),
-                placeholder = {
-                    Text("example@gmail.com")
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email
-                ),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFFDFDFD),
-                    unfocusedContainerColor = Color(0xFFDFE0EB),
-                    focusedIndicatorColor = Color(0xFF596096),
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = { data ->
-                    password = data
-                },
-                trailingIcon = {
-                    IconButton (onClick = {
-                        visibility = !visibility
-                    }) {
-                        Icon(
-                            painter = if (visibility)
-                                painterResource(R.drawable.baseline_visibility_off_24)
-                            else
-                                painterResource(R.drawable.baseline_visibility_24),
-                            contentDescription = null
-                        )
-                    }
-                },
-                visualTransformation = if (visibility) VisualTransformation.None else PasswordVisualTransformation(),
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 15.dp),
-                shape = RoundedCornerShape(15.dp),
-                placeholder = {
-                    Text("*********")
-                },
+                    .padding(horizontal = 20.dp)
+                    .background(
+                        color = Color.White,
+                        shape = RoundedCornerShape(30.dp)
+                    )
+                    .padding(20.dp)
+            ) {
 
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFF8F6FC),
-                    unfocusedContainerColor = Color(0xFFDDDEE9),
-                    focusedIndicatorColor = Color(0xFF596096),
-                    unfocusedIndicatorColor = Color.Transparent
+                IconButton(
+                    onClick = { activity.finish() }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_arrow_back_24),
+                        contentDescription = null,
+                        tint = Color.Gray
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "Log in",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 28.sp,
+                    color = Color(0xFF3460FB),
+                    textAlign = TextAlign.Center
                 )
-            )
-            Text(
-                "Forgot Password?",
-                style = TextStyle(
+
+                Text(
+                    text = "Welcome to ODYSSEY",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(30.dp))
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(50.dp),
+                    placeholder = { Text("E-mail ID") },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email
+                    ),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedIndicatorColor = Color(0xFFE0E6FF),
+                        unfocusedIndicatorColor = Color(0xFFE0E6FF)
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(15.dp))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(50.dp),
+                    placeholder = { Text("Password") },
+                    trailingIcon = {
+                        IconButton(onClick = { visibility = !visibility }) {
+                            Icon(
+                                painter = if (visibility)
+                                    painterResource(R.drawable.baseline_visibility_off_24)
+                                else
+                                    painterResource(R.drawable.baseline_visibility_24),
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    visualTransformation =
+                        if (visibility) VisualTransformation.None else PasswordVisualTransformation(),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedIndicatorColor = Color(0xFFE0E6FF),
+                        unfocusedIndicatorColor = Color(0xFFE0E6FF)
+                    )
+                )
+
+                Text(
+                    text = "Forget Password?",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                        .clickable {
+                            val intent =
+                                Intent(context, ForgetPasswordActivity::class.java)
+                            context.startActivity(intent)
+                        },
+                    fontSize = 13.sp,
                     color = Color(0xFF3460FB),
                     textAlign = TextAlign.End
-                ),
-                modifier = Modifier
-                    .padding(horizontal = 15.dp, vertical = 10.dp).clickable {
-                        val intent = Intent(context, ForgetPasswordActivity::class.java)
-                        context.startActivity(intent)
+                )
 
-                    },
-            )
-            Spacer(modifier = Modifier.height(25.dp))
+                Spacer(modifier = Modifier.height(25.dp))
 
-            Button(onClick = {
-                keyBoardController?.hide()
-                if (email.isNotBlank() && password.isNotBlank()) {
-                    userViewModel.login(email, password) { success, message ->
-                        if (success) {
-                            val userId = FirebaseAuth.getInstance().currentUser?.uid
-                            if (userId != null) {
-                                userViewModel.getUserByID(userId)
+                Button(
+                    onClick = {
+                        keyBoardController?.hide()
+                        if (email.isNotBlank() && password.isNotBlank()) {
+                            userViewModel.login(email, password) { success, message ->
+                                if (success) {
+                                    val userId =
+                                        FirebaseAuth.getInstance().currentUser?.uid
+                                    if (userId != null) {
+                                        userViewModel.getUserByID(userId)
+                                    }
+                                    Toast.makeText(
+                                        context,
+                                        "Login Successful",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    val intent =
+                                        Intent(context, DashboardActivity::class.java)
+                                    context.startActivity(intent)
+                                    activity.finish()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        message ?: "Invalid details",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
-                            Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-                            val intent = Intent(context, DashboardActivity::class.java)
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Please enter email and password",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    shape = RoundedCornerShape(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF3460FB)
+                    )
+                ) {
+                    Text("Login", fontSize = 16.sp)
+                }
+
+                Spacer(modifier = Modifier.height(15.dp))
+
+                Text(
+                    text = buildAnnotatedString {
+                        append("Don't have an account? ")
+                        withStyle(
+                            SpanStyle(
+                                color = Color(0xFF3460FB),
+                                fontWeight = FontWeight.Bold
+                            )
+                        ) {
+                            append("Sign Up")
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            val intent =
+                                Intent(context, SignUpActivity::class.java)
                             context.startActivity(intent)
                             activity.finish()
-                        } else {
-                            Toast.makeText(context, message ?: "Invalid details", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                } else {
-                    Toast.makeText(context, "Please enter email and password", Toast.LENGTH_SHORT).show()
-                }
-            },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 15.dp)
-                    .height(60.dp),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 15.dp
-                ),
-                shape = RoundedCornerShape(15.dp)
-            ) {
-                Text("Log In")
+                        },
+                    textAlign = TextAlign.Center
+                )
             }
-
-            Text(
-                text = buildAnnotatedString {
-                    append("Don't have an account? ")
-                    withStyle(style = SpanStyle(color = Color(0xFF3460FB), fontWeight = FontWeight.Bold)) {
-                        append("Sign Up")
-                    }
-                },
-                modifier = Modifier
-                    .padding(horizontal = 15.dp, vertical = 10.dp).clickable {
-                        val intent = Intent(context, SignUpActivity::class.java)
-                        context.startActivity(intent)
-                        activity.finish()
-                    },
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
+
 
 @Preview
 @Composable
