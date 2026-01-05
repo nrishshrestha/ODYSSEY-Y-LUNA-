@@ -22,7 +22,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.mapbox.mapboxsdk.Mapbox
+import org.maplibre.android.geometry.LatLng
 import android.Manifest
 
 @Composable
@@ -42,7 +42,10 @@ fun CreateScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        BaatoMap(routePoints = viewModel.routePoints)
+        BaatoMap(
+            routePoints = viewModel.routePoints,
+            modifier = Modifier.fillMaxSize()
+        )
 
         Button(
             onClick = {

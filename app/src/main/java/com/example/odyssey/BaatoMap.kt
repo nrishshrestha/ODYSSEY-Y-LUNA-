@@ -1,47 +1,68 @@
 package com.example.odyssey
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
+import org.maplibre.android.geometry.LatLng
 import com.example.odyssey.utils.drawRoute
-import com.mapbox.mapboxsdk.geometry.LatLng
-import com.mapbox.mapboxsdk.maps.MapView
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
 
 @Composable
 fun BaatoMap(
-    routePoints: List<LatLng>
+    routePoints: List<LatLng>,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
 
-    val mapboxMapState = remember { mutableStateOf<MapboxMap?>(null) }
+    val mapView = remember {
+        MapView(context)
+    }
 
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
         factory = {
-            MapView(context).apply {
+            mapView.apply {
                 onCreate(null)
-
-                getMapAsync { mapboxMap ->
-                    mapboxMapState.value = mapboxMap
-
-                    mapboxMap.setStyle(
-                        Style.Builder().fromUri(
-                            "https://api.baato.io/api/v1/styles/baato-dark?key=bpk.GUTSn6p8o-LVyDlQOu-S7HLs2gQgI5Y6zkvoAGVlDXMD"
-                        )
-                    )
+                getMapAsync { map ->
+                    // Load Baato style from assets
+                    map.setStyle(Style.Builder().fromUri("asset://baato_style.json"))
                 }
             }
         },
-        update = {
-            mapboxMapState.value?.let { mapboxMap ->
-                drawRoute(mapboxMap, routePoints)
+        update = { view ->
+            view.getMapAsync { map ->
+                if (map.style?.isFullyLoaded == true) {
+                    drawRoute(map, routePoints)
+                }
             }
         }
     )
+
+    // Handle MapView lifecycle
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                else -> {}
+            }
+        }
+        lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycle.removeObserver(observer)
+            mapView.onDestroy()
+        }
+    }
 }

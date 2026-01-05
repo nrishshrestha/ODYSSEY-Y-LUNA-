@@ -15,7 +15,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.mapbox.mapboxsdk.geometry.LatLng
+import org.maplibre.android.geometry.LatLng
 
 class CreateRouteViewModel(
     application: Application

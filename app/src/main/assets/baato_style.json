@@ -1,0 +1,19 @@
+{
+  "version": 8,
+  "sources": {
+    "baato": {
+      "type": "raster",
+      "tiles": [
+        "https://tile.baato.io/api/v1/tiles/{z}/{x}/{y}.png?key=bpk.GUTSn6p8o-LVyDlQOu-S7HLs2gQgI5Y6zkvoAGVlDXMD"
+      ],
+      "tileSize": 256
+    }
+  },
+  "layers": [
+    {
+      "id": "baato-layer",
+      "type": "raster",
+      "source": "baato"
+    }
+  ]
+}
