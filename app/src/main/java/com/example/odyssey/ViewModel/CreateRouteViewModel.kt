@@ -1,66 +1,88 @@
 package com.example.odyssey.ViewModel
 
-import android.Manifest
-import android.app.Application
+import android.content.Context
 import android.os.Looper
-import androidx.annotation.RequiresPermission
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
+import com.google.android.gms.location.*
 import org.maplibre.android.geometry.LatLng
 
-class CreateRouteViewModel(
-    application: Application
-) : AndroidViewModel(application) {
+class CreateRouteViewModel : ViewModel() {
 
-    private val locationClient =
-        LocationServices.getFusedLocationProviderClient(application)
-
-    private val locationRequest = LocationRequest.Builder(
-        Priority.PRIORITY_HIGH_ACCURACY,
-        3000L
-    ).build()
-
-    private val _routePoints = mutableStateListOf<LatLng>()
-    val routePoints: List<LatLng> = _routePoints
-
-    var isRecording by mutableStateOf(false)
+    // Observable state
+    var routePoints = mutableStateListOf<LatLng>()
         private set
 
-    private val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(result: LocationResult) {
-            result.lastLocation?.let {
-                if (isRecording) {
-                    _routePoints.add(
-                        LatLng(it.latitude, it.longitude)
-                    )
+    var isRecording = mutableStateOf(false)
+        private set
+
+    // Location tracking
+    private var fusedLocationClient: FusedLocationProviderClient? = null
+    private var locationCallback: LocationCallback? = null
+
+    // Start recording
+    fun startRecording(context: Context) {
+        if (isRecording.value) return
+
+        isRecording.value = true
+        routePoints.clear()
+
+        // Initialize location client
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+        // Location request settings
+        val locationRequest = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            5000L // Update every 5 seconds
+        ).apply {
+            setMinUpdateIntervalMillis(2000L) // Fastest: 2 seconds
+            setWaitForAccurateLocation(true)
+        }.build()
+
+        // Location callback
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                result.lastLocation?.let { location ->
+                    val latLng = LatLng(location.latitude, location.longitude)
+                    routePoints.add(latLng)
+
+                    // Log for debugging
+                    android.util.Log.d("CreateRouteViewModel",
+                        "New point: ${location.latitude}, ${location.longitude}")
                 }
             }
         }
+
+        // Start location updates
+        try {
+            fusedLocationClient?.requestLocationUpdates(
+                locationRequest,
+                locationCallback!!,
+                Looper.getMainLooper()
+            )
+        } catch (e: SecurityException) {
+            android.util.Log.e("CreateRouteViewModel", "Location permission error", e)
+            stopRecording()
+        }
     }
 
-    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
-    fun startRecording() {
-        isRecording = true
-        _routePoints.clear()
-
-        locationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper()
-        )
-    }
-
+    // Stop recording
     fun stopRecording() {
-        isRecording = false
-        locationClient.removeLocationUpdates(locationCallback)
+        isRecording.value = false
+        locationCallback?.let {
+            fusedLocationClient?.removeLocationUpdates(it)
+        }
+        fusedLocationClient = null
+        locationCallback = null
+
+        android.util.Log.d("CreateRouteViewModel",
+            "Recording stopped. Total points: ${routePoints.size}")
+    }
+
+    // Clean up when ViewModel is destroyed
+    override fun onCleared() {
+        super.onCleared()
+        stopRecording()
     }
 }

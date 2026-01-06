@@ -1,76 +1,82 @@
 package com.example.odyssey
 
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import android.Manifest
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.odyssey.ViewModel.CreateRouteViewModel
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import org.maplibre.android.geometry.LatLng
-import android.Manifest
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun CreateScreen(
     viewModel: CreateRouteViewModel = viewModel()
 ) {
     val context = LocalContext.current
 
-    val locationPermissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission()
-        ) { isGranted ->
-            if (isGranted) {
-                viewModel.startRecording()
-            }
+    // Location permissions
+    val permissionsState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
+
+    LaunchedEffect(Unit) {
+        if (!permissionsState.allPermissionsGranted) {
+            permissionsState.launchMultiplePermissionRequest()
         }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-
+        // Map
         BaatoMap(
             routePoints = viewModel.routePoints,
             modifier = Modifier.fillMaxSize()
         )
 
+        // Record button at bottom
         Button(
             onClick = {
-                if (viewModel.isRecording) {
-                    viewModel.stopRecording()
-                } else {
-                    if (
-                        ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        viewModel.startRecording()
+                if (permissionsState.allPermissionsGranted) {
+                    // ADD .value HERE 👇
+                    if (viewModel.isRecording.value) {
+                        viewModel.stopRecording()
                     } else {
-                        locationPermissionLauncher.launch(
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        )
+                        viewModel.startRecording(context)
                     }
+                } else {
+                    permissionsState.launchMultiplePermissionRequest()
                 }
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(16.dp)
+                .padding(bottom = 32.dp)
         ) {
-            Text(if (viewModel.isRecording) "Stop" else "Record")
+            Text(
+                // ADD .value HERE TOO 👇
+                text = if (viewModel.isRecording.value) "Stop Recording" else "Record"
+            )
+        }
+
+        // Permission message if not granted
+        if (!permissionsState.allPermissionsGranted) {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Location permission is required to record your journey",
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
         }
     }
 }
