@@ -13,6 +13,7 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.geometry.LatLng
 import com.example.odyssey.utils.drawRoute
+import org.maplibre.android.camera.CameraPosition
 
 @Composable
 fun BaatoMap(
@@ -32,8 +33,22 @@ fun BaatoMap(
             mapView.apply {
                 onCreate(null)
                 getMapAsync { map ->
-                    // Load Baato style from assets
-                    map.setStyle(Style.Builder().fromUri("asset://baato_style.json"))
+                    // Set initial camera position (Kathmandu, Nepal)
+                    val kathmandu = LatLng(27.7172, 85.3240)
+                    map.cameraPosition = CameraPosition.Builder()
+                        .target(kathmandu)
+                        .zoom(12.0)
+                        .build()
+
+                    // Use Baato's vector style URL directly
+                    val baatoStyleUrl = "https://api.baato.io/api/v1/styles/breeze?key=bpk.GUTSn6p8o-LVyDlQOu-S7HLs2gQgI5Y6zkvoAGVlDXMD"
+
+                    map.setStyle(Style.Builder().fromUri(baatoStyleUrl)) { style ->
+                        // Style loaded successfully
+                        if (routePoints.isNotEmpty()) {
+                            drawRoute(map, routePoints)
+                        }
+                    }
                 }
             }
         },
