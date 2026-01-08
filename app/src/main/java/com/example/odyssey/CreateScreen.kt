@@ -28,16 +28,21 @@ fun CreateScreen(
         )
     )
 
-    LaunchedEffect(Unit) {
+    // Request permissions and get current location
+    LaunchedEffect(permissionsState.allPermissionsGranted) {
         if (!permissionsState.allPermissionsGranted) {
             permissionsState.launchMultiplePermissionRequest()
+        } else {
+            // Get current location when permissions are granted
+            viewModel.getCurrentLocation(context)
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Map
+        // Map with current location
         BaatoMap(
             routePoints = viewModel.routePoints,
+            currentLocation = viewModel.currentLocation.value,
             modifier = Modifier.fillMaxSize()
         )
 
@@ -45,7 +50,6 @@ fun CreateScreen(
         Button(
             onClick = {
                 if (permissionsState.allPermissionsGranted) {
-                    // ADD .value HERE 👇
                     if (viewModel.isRecording.value) {
                         viewModel.stopRecording()
                     } else {
@@ -60,7 +64,6 @@ fun CreateScreen(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                // ADD .value HERE TOO 👇
                 text = if (viewModel.isRecording.value) "Stop Recording" else "Record"
             )
         }

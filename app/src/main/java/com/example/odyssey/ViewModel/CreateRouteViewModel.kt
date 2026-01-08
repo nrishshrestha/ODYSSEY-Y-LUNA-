@@ -14,6 +14,9 @@ class CreateRouteViewModel : ViewModel() {
     var routePoints = mutableStateListOf<LatLng>()
         private set
 
+    var currentLocation = mutableStateOf<LatLng?>(null)
+        private set
+
     var isRecording = mutableStateOf(false)
         private set
 
@@ -21,15 +24,75 @@ class CreateRouteViewModel : ViewModel() {
     private var fusedLocationClient: FusedLocationProviderClient? = null
     private var locationCallback: LocationCallback? = null
 
-    // Start recording
+    // Get current location once (for initial map position)
+    fun getCurrentLocation(context: Context) {
+        android.util.Log.d("CreateRouteViewModel", "Getting current location...")
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+        try {
+            fusedLocationClient?.lastLocation?.addOnSuccessListener { location ->
+                if (location != null) {
+                    currentLocation.value = LatLng(location.latitude, location.longitude)
+                    android.util.Log.d("CreateRouteViewModel",
+                        "Current location: ${location.latitude}, ${location.longitude}")
+                } else {
+                    android.util.Log.d("CreateRouteViewModel", "Last location is null, requesting updates")
+                    // If no last location, request one update
+                    startLocationUpdatesForCurrent(context)
+                }
+            }
+        } catch (e: SecurityException) {
+            android.util.Log.e("CreateRouteViewModel", "Location permission error", e)
+        }
+    }
+
+    // Request location updates just to get current location
+    private fun startLocationUpdatesForCurrent(context: Context) {
+        val locationRequest = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            1000L
+        ).setMaxUpdates(1).build() // Only one update
+
+        val callback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                result.lastLocation?.let { location ->
+                    currentLocation.value = LatLng(location.latitude, location.longitude)
+                    android.util.Log.d("CreateRouteViewModel",
+                        "Got current location: ${location.latitude}, ${location.longitude}")
+                }
+            }
+        }
+
+        try {
+            fusedLocationClient?.requestLocationUpdates(
+                locationRequest,
+                callback,
+                Looper.getMainLooper()
+            )
+        } catch (e: SecurityException) {
+            android.util.Log.e("CreateRouteViewModel", "Location permission error", e)
+        }
+    }
+
+    // Start recording route
     fun startRecording(context: Context) {
-        if (isRecording.value) return
+        android.util.Log.d("CreateRouteViewModel", "startRecording called")
+
+        if (isRecording.value) {
+            android.util.Log.d("CreateRouteViewModel", "Already recording, returning")
+            return
+        }
 
         isRecording.value = true
         routePoints.clear()
 
-        // Initialize location client
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+        android.util.Log.d("CreateRouteViewModel", "Recording started, routePoints cleared")
+
+        // Initialize location client if not already
+        if (fusedLocationClient == null) {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+        }
 
         // Location request settings
         val locationRequest = LocationRequest.Builder(
@@ -45,11 +108,15 @@ class CreateRouteViewModel : ViewModel() {
             override fun onLocationResult(result: LocationResult) {
                 result.lastLocation?.let { location ->
                     val latLng = LatLng(location.latitude, location.longitude)
+
+                    // Update current location
+                    currentLocation.value = latLng
+
+                    // Add to route
                     routePoints.add(latLng)
 
-                    // Log for debugging
                     android.util.Log.d("CreateRouteViewModel",
-                        "New point: ${location.latitude}, ${location.longitude}")
+                        "New point: ${location.latitude}, ${location.longitude}. Total: ${routePoints.size}")
                 }
             }
         }
@@ -61,6 +128,7 @@ class CreateRouteViewModel : ViewModel() {
                 locationCallback!!,
                 Looper.getMainLooper()
             )
+            android.util.Log.d("CreateRouteViewModel", "Location updates started")
         } catch (e: SecurityException) {
             android.util.Log.e("CreateRouteViewModel", "Location permission error", e)
             stopRecording()
@@ -73,16 +141,16 @@ class CreateRouteViewModel : ViewModel() {
         locationCallback?.let {
             fusedLocationClient?.removeLocationUpdates(it)
         }
-        fusedLocationClient = null
         locationCallback = null
 
         android.util.Log.d("CreateRouteViewModel",
             "Recording stopped. Total points: ${routePoints.size}")
     }
 
-    // Clean up when ViewModel is destroyed
+    // Clean up
     override fun onCleared() {
         super.onCleared()
         stopRecording()
+        fusedLocationClient = null
     }
 }
