@@ -41,13 +41,16 @@ class UserProfileScreen : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileBody() {
-    var name by rememberSaveable { mutableStateOf("User Name") }
-    var bio by rememberSaveable {
-        mutableStateOf("Exploring the world\n📍 Kathmandu, Nepal")
-    }
-    var profileImageUrl by rememberSaveable {
-        mutableStateOf("https://via.placeholder.com/150")
-    }
+    val context = LocalContext.current
+    val userViewModel = remember { UserViewModel(UserRepoImpl()) }
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val userId = currentUser?.uid ?: ""
+
+    val userData by userViewModel.user.observeAsState()
+
+    var name by remember { mutableStateOf("") }
+    var bio by remember { mutableStateOf("") }
+    var profileImageUrl by remember { mutableStateOf("") }
     var showEditDialog by remember { mutableStateOf(false) }
 
     Scaffold(
