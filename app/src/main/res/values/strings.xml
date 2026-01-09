@@ -6,4 +6,6 @@
     <string name="title_activity_login">LoginActivity</string>
     <string name="title_activity_forget_password">ForgetPasswordActivity</string>
     <string name="title_activity_user_profile_screen">UserProfileScreen</string>
+    <string name="title_activity_search_user">SearchUserActivity</string>
+    <string name="title_activity_search_user_screen">SearchUserScreen</string>
 </resources>

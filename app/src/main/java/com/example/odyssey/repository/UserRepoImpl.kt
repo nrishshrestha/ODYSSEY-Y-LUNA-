@@ -104,8 +104,14 @@ class UserRepoImpl : UserRepo {
     override fun getAllUser(callback: (Boolean, String, List<UserModel?>) -> Unit) {
         ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val allUser = arrayListOf<UserModel>()
-
+                val allUsers = arrayListOf<UserModel>()
+                for (childSnapshot in snapshot.children) {
+                    val user = childSnapshot.getValue(UserModel::class.java)
+                    if (user != null) {
+                        allUsers.add(user)
+                    }
+                }
+                callback(true, "Users fetched successfully", allUsers)
             }
 
             override fun onCancelled(error: DatabaseError) {
