@@ -41,15 +41,13 @@ class UserProfileScreen : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileBody() {
-
     var name by rememberSaveable { mutableStateOf("User Name") }
     var bio by rememberSaveable {
-        mutableStateOf("Exploring the world of Android & Compose 🚀\n📍 New York, NY")
+        mutableStateOf("Exploring the world\n📍 Kathmandu, Nepal")
     }
     var profileImageUrl by rememberSaveable {
         mutableStateOf("https://via.placeholder.com/150")
     }
-
     var showEditDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -121,7 +119,6 @@ fun ProfileHeader(imageUrl: String) {
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         AsyncImage(
             model = imageUrl,
             contentDescription = null,
@@ -138,7 +135,7 @@ fun ProfileHeader(imageUrl: String) {
             modifier = Modifier.weight(3f),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            UserStats("Posts", "125")
+            UserStats("Trips", "125")
             UserStats("Followers", "1.2k")
             UserStats("Following", "350")
         }
@@ -157,7 +154,6 @@ fun UserStats(label: String, count: String) {
 fun ProfileBio(name: String, bio: String) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text(name, fontWeight = FontWeight.Bold)
-        Text("Digital Creator", color = Color.Gray, fontSize = 14.sp)
         Text(bio, fontSize = 14.sp)
     }
 }
