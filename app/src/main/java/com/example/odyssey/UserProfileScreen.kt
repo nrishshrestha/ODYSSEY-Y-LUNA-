@@ -71,7 +71,7 @@ fun UserProfileBody() {
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text("username_123", fontWeight = FontWeight.Bold)
+                    Text(userData?.email ?: "Profile", fontWeight = FontWeight.Bold)
                 },
                 navigationIcon = {
                     IconButton(onClick = {}) {
