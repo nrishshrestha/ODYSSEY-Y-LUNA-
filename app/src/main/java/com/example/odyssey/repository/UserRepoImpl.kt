@@ -119,14 +119,7 @@ class UserRepoImpl : UserRepo {
         model: UserModel,
         callback: (Boolean, String) -> Unit
     ) {
-        val userMap = mapOf(
-            "userId" to model.userId,
-            "firstName" to model.firstName,
-            "lastName" to model.lastName,
-            "email" to model.email,
-            "gender" to model.gender,
-            "dob" to model.dob
-        )
+        val userMap = model.toMap()
         ref.child(userId).updateChildren(userMap).addOnCompleteListener {
             if (it.isSuccessful) {
                 callback(true, "Profile updated successfully")
