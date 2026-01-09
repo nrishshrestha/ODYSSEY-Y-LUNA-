@@ -1,6 +1,7 @@
 package com.example.odyssey
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,17 +17,22 @@ import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.example.odyssey.ViewModel.UserViewModel
+import com.example.odyssey.model.UserModel
+import com.example.odyssey.repository.UserRepoImpl
+import com.google.firebase.auth.FirebaseAuth
 
 class UserProfileScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,7 +118,7 @@ fun UserProfileBody() {
         }
     }
 
-    if (showEditDialog) {
+    if (showEditDialog && userData != null) {
         EditProfileDialog(
             userModel = userData!!,
             onSave = { updatedModel ->
@@ -139,7 +145,7 @@ fun ProfileHeader(imageUrl: String) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
-            model = imageUrl,
+            model = imageUrl.ifEmpty { "https://via.placeholder.com/150" },
             contentDescription = null,
             modifier = Modifier
                 .size(80.dp)
@@ -173,7 +179,7 @@ fun UserStats(label: String, count: String) {
 fun ProfileBio(name: String, bio: String) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text(name, fontWeight = FontWeight.Bold)
-        Text(bio, fontSize = 14.sp)
+        Text(bio.ifEmpty { "No bio yet" }, fontSize = 14.sp)
     }
 }
 
@@ -214,15 +220,14 @@ fun ProfileActions(onEditClick: () -> Unit) {
 
 @Composable
 fun EditProfileDialog(
-    currentName: String,
-    currentBio: String,
-    currentImage: String,
-    onSave: (String, String, String) -> Unit,
+    userModel: UserModel,
+    onSave: (UserModel) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var name by remember { mutableStateOf(currentName) }
-    var bio by remember { mutableStateOf(currentBio) }
-    var imageUrl by remember { mutableStateOf(currentImage) }
+    var firstName by remember { mutableStateOf(userModel.firstName) }
+    var lastName by remember { mutableStateOf(userModel.lastName) }
+    var bio by remember { mutableStateOf(userModel.bio) }
+    var imageUrl by remember { mutableStateOf(userModel.imageUrl) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -231,7 +236,7 @@ fun EditProfileDialog(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
                 AsyncImage(
-                    model = imageUrl,
+                    model = imageUrl.ifEmpty { "https://via.placeholder.com/150" },
                     contentDescription = null,
                     modifier = Modifier
                         .size(80.dp)
@@ -247,9 +252,15 @@ fun EditProfileDialog(
                 )
 
                 OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") }
+                    value = firstName,
+                    onValueChange = { firstName = it },
+                    label = { Text("First Name") }
+                )
+                
+                OutlinedTextField(
+                    value = lastName,
+                    onValueChange = { lastName = it },
+                    label = { Text("Last Name") }
                 )
 
                 OutlinedTextField(
@@ -261,7 +272,15 @@ fun EditProfileDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(name, bio, imageUrl) }) {
+            TextButton(onClick = {
+                val updatedModel = userModel.copy(
+                    firstName = firstName,
+                    lastName = lastName,
+                    bio = bio,
+                    imageUrl = imageUrl
+                )
+                onSave(updatedModel)
+            }) {
                 Text("Save")
             }
         },
