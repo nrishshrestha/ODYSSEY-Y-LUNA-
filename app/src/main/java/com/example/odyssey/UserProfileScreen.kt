@@ -53,6 +53,20 @@ fun UserProfileBody() {
     var profileImageUrl by remember { mutableStateOf("") }
     var showEditDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(userId) {
+        if (userId.isNotEmpty()) {
+            userViewModel.getUserByID(userId)
+        }
+    }
+
+    LaunchedEffect(userData) {
+        userData?.let {
+            name = "${it.firstName} ${it.lastName}".trim()
+            bio = it.bio
+            profileImageUrl = it.imageUrl
+        }
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
