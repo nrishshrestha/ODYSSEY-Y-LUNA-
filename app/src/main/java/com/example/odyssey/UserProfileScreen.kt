@@ -114,14 +114,16 @@ fun UserProfileBody() {
 
     if (showEditDialog) {
         EditProfileDialog(
-            currentName = name,
-            currentBio = bio,
-            currentImage = profileImageUrl,
-            onSave = { newName, newBio, newImage ->
-                name = newName
-                bio = newBio
-                profileImageUrl = newImage
-                showEditDialog = false
+            userModel = userData!!,
+            onSave = { updatedModel ->
+                userViewModel.editProfile(userId, updatedModel) { success, message ->
+                    if (success) {
+                        Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
+                        showEditDialog = false
+                    } else {
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    }
+                }
             },
             onDismiss = { showEditDialog = false }
         )
