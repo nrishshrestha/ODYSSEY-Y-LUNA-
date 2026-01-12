@@ -3,7 +3,6 @@ package com.example.odyssey.ViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.odyssey.model.FriendModel
 import com.example.odyssey.model.UserModel
 import com.example.odyssey.repository.FriendRepo
 import com.example.odyssey.repository.UserRepo
