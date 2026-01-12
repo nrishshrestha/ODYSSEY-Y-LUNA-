@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.odyssey.ViewModel.UserViewModel
 import com.example.odyssey.model.UserModel
+import com.example.odyssey.repository.FriendRepoImpl
 import com.example.odyssey.repository.UserRepoImpl
 import com.google.firebase.auth.FirebaseAuth
 
@@ -38,30 +39,42 @@ class UserProfileScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val targetUserId = intent.getStringExtra("userId")
         setContent {
-            UserProfileBody()
+            UserProfileBody(targetUserId)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserProfileBody() {
+fun UserProfileBody(targetUserId: String? = null) {
     val context = LocalContext.current
-    val userViewModel = remember { UserViewModel(UserRepoImpl()) }
     val currentUser = FirebaseAuth.getInstance().currentUser
-    val userId = currentUser?.uid ?: ""
+    val currentUserId = currentUser?.uid ?: ""
+    
+    // Determine if we are looking at our own profile or someone else's
+    val isOwnProfile = targetUserId == null || targetUserId == currentUserId
+    val effectiveUserId = targetUserId ?: currentUserId
 
-    val userData by userViewModel.user.observeAsState()
+    val userViewModel = remember { UserViewModel(UserRepoImpl(), FriendRepoImpl(UserRepoImpl())) }
+    
+    val userData by if (isOwnProfile) userViewModel.user.observeAsState() else userViewModel.otherUser.observeAsState()
+    val isFollowing by userViewModel.isFollowing.observeAsState(false)
 
     var name by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
     var profileImageUrl by remember { mutableStateOf("") }
     var showEditDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(userId) {
-        if (userId.isNotEmpty()) {
-            userViewModel.getUserByID(userId)
+    LaunchedEffect(effectiveUserId) {
+        if (effectiveUserId.isNotEmpty()) {
+            if (isOwnProfile) {
+                userViewModel.getUserByID(effectiveUserId)
+            } else {
+                userViewModel.getOtherUserByID(effectiveUserId)
+                userViewModel.checkFollowingStatus(currentUserId, effectiveUserId)
+            }
         }
     }
 
@@ -108,7 +121,14 @@ fun UserProfileBody() {
             Spacer(modifier = Modifier.height(16.dp))
 
             ProfileActions(
-                onEditClick = { showEditDialog = true }
+                isOwnProfile = isOwnProfile,
+                isFollowing = isFollowing,
+                onEditClick = { showEditDialog = true },
+                onFollowClick = {
+                    userViewModel.followUser(currentUserId, effectiveUserId) { success, message ->
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -118,11 +138,11 @@ fun UserProfileBody() {
         }
     }
 
-    if (showEditDialog && userData != null) {
+    if (showEditDialog && userData != null && isOwnProfile) {
         EditProfileDialog(
             userModel = userData!!,
             onSave = { updatedModel ->
-                userViewModel.editProfile(userId, updatedModel) { success, message ->
+                userViewModel.editProfile(currentUserId, updatedModel) { success, message ->
                     if (success) {
                         Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
                         showEditDialog = false
@@ -184,36 +204,66 @@ fun ProfileBio(name: String, bio: String) {
 }
 
 @Composable
-fun ProfileActions(onEditClick: () -> Unit) {
+fun ProfileActions(
+    isOwnProfile: Boolean,
+    isFollowing: Boolean,
+    onEditClick: () -> Unit,
+    onFollowClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        if (isOwnProfile) {
+            Button(
+                onClick = onEditClick,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFEFEFEF),
+                    contentColor = Color.Black
+                )
+            ) {
+                Text("Edit Profile")
+            }
 
-        Button(
-            onClick = onEditClick,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFEFEFEF),
-                contentColor = Color.Black
-            )
-        ) {
-            Text("Edit Profile")
-        }
+            Button(
+                onClick = {},
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFEFEFEF),
+                    contentColor = Color.Black
+                )
+            ) {
+                Text("Share Profile")
+            }
+        } else {
+            Button(
+                onClick = if (isFollowing) ({}) else onFollowClick,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isFollowing) Color.Gray else Color(0xFF3460FB),
+                    contentColor = Color.White
+                )
+            ) {
+                Text(if (isFollowing) "Followed" else "Follow")
+            }
 
-        Button(
-            onClick = {},
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFEFEFEF),
-                contentColor = Color.Black
-            )
-        ) {
-            Text("Share Profile")
+            Button(
+                onClick = {},
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFEFEFEF),
+                    contentColor = Color.Black
+                )
+            ) {
+                Text("Message")
+            }
         }
     }
 }
