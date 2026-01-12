@@ -1,5 +1,6 @@
 package com.example.odyssey
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,6 +44,7 @@ class SearchActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen() {
+    val context = LocalContext.current
     val userViewModel = remember { UserViewModel(UserRepoImpl()) }
     var searchQuery by remember { mutableStateOf("") }
     val allUsers by userViewModel.allUsers.observeAsState(emptyList())
@@ -105,7 +108,11 @@ fun SearchScreen() {
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(filteredUsers) { user ->
-                        UserSearchItem(user)
+                        UserSearchItem(user) {
+                            val intent = Intent(context, UserProfileScreen::class.java)
+                            intent.putExtra("userId", user.userId)
+                            context.startActivity(intent)
+                        }
                     }
                 }
             }
@@ -114,11 +121,11 @@ fun SearchScreen() {
 }
 
 @Composable
-fun UserSearchItem(user: UserModel) {
+fun UserSearchItem(user: UserModel, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Navigate to profile */ },
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA))
     ) {
