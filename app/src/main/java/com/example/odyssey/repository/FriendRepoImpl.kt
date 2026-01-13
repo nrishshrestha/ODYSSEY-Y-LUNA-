@@ -34,7 +34,7 @@ class FriendRepoImpl(
 
         newRef.setValue(model).addOnCompleteListener {
             if (it.isSuccessful) {
-                callback(true, "Friend request sent")
+                callback(true, "Follow request sent")
             } else {
                 callback(false, it.exception?.message ?: "Failed to send friend request")
             }
@@ -62,7 +62,7 @@ class FriendRepoImpl(
                     val updated = current.copy(status = "accepted")
                     ref.child(requestId).setValue(updated).addOnCompleteListener {
                         if (it.isSuccessful) {
-                            callback(true, "Friend request accepted")
+                            callback(true, "Follow request accepted")
                         } else {
                             callback(false, it.exception?.message ?: "Failed to accept request")
                         }
@@ -81,7 +81,7 @@ class FriendRepoImpl(
     ) {
         ref.child(requestId).removeValue().addOnCompleteListener {
             if (it.isSuccessful) {
-                callback(true, "Friend request cancelled")
+                callback(true, "Follow request cancelled")
             } else {
                 callback(false, it.exception?.message ?: "Failed to cancel request")
             }
