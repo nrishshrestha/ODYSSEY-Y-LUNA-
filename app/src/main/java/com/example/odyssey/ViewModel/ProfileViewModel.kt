@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.odyssey.model.UserModel
 import com.example.odyssey.repository.UserRepoImpl
-import com.example.odyssey.repository.UserRepository
+import com.example.odyssey.repository.UserRepo
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ import kotlinx.coroutines.tasks.await
 class   ProfileViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val database = FirebaseDatabase.getInstance().getReference("User")
-    private val userRepository: UserRepository = UserRepoImpl()
+    private val userRepository: UserRepo = UserRepoImpl()
 
     // Use a StateFlow to hold the user data, so Composables can observe it
     private val _user = MutableStateFlow<UserModel?>(null)
