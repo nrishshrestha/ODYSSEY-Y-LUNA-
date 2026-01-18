@@ -1,6 +1,7 @@
 package com.example.odyssey.repository
 
 import com.example.odyssey.model.FriendModel
+import com.example.odyssey.model.NotificationModel
 import com.example.odyssey.model.UserModel
 import com.google.firebase.database.*
 
@@ -10,6 +11,7 @@ class FriendRepoImpl(
 
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
     private val ref: DatabaseReference = database.getReference("Friend")
+    private val notificationRepo: NotificationRepo = NotificationRepoImpl()
 
     override fun sendFriendRequest(
         fromUserId: String,
@@ -34,6 +36,17 @@ class FriendRepoImpl(
 
         newRef.setValue(model).addOnCompleteListener {
             if (it.isSuccessful) {
+                // Send generalized notification with requestId in metadata
+                val notification = NotificationModel(
+                    fromUserId = fromUserId,
+                    toUserId = toUserId,
+                    type = "FOLLOW",
+                    content = "Started following you",
+                    timestamp = System.currentTimeMillis(),
+                    metadata = mapOf("requestId" to requestId)
+                )
+                notificationRepo.sendNotification(notification) { _, _ -> }
+                
                 callback(true, "Follow request sent")
             } else {
                 callback(false, it.exception?.message ?: "Failed to send friend request")
@@ -62,6 +75,16 @@ class FriendRepoImpl(
                     val updated = current.copy(status = "accepted")
                     ref.child(requestId).setValue(updated).addOnCompleteListener {
                         if (it.isSuccessful) {
+                            // Send notification for acceptance
+                            val notification = NotificationModel(
+                                fromUserId = current.toUserId,
+                                toUserId = current.fromUserId,
+                                type = "FOLLOW_ACCEPT",
+                                content = "Accepted your follow request",
+                                timestamp = System.currentTimeMillis()
+                            )
+                            notificationRepo.sendNotification(notification) { _, _ -> }
+                            
                             callback(true, "Follow request accepted")
                         } else {
                             callback(false, it.exception?.message ?: "Failed to accept request")

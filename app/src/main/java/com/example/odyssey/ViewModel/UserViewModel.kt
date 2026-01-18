@@ -3,6 +3,7 @@ package com.example.odyssey.ViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.odyssey.model.FriendModel
 import com.example.odyssey.model.UserModel
 import com.example.odyssey.repository.FriendRepo
 import com.example.odyssey.repository.UserRepo
@@ -26,6 +27,9 @@ class UserViewModel (val repository: UserRepo, val friendRepo: FriendRepo? = nul
 
     private val _isFollowing = MutableLiveData<Boolean>()
     val isFollowing: LiveData<Boolean> = _isFollowing
+
+    private val _pendingRequests = MutableLiveData<List<FriendModel?>>()
+    val pendingRequests: LiveData<List<FriendModel?>> = _pendingRequests
 
     fun login(email:String,password:String,callback:(Boolean,String) -> Unit) {
         repository.login(email,password,callback)
@@ -95,13 +99,28 @@ class UserViewModel (val repository: UserRepo, val friendRepo: FriendRepo? = nul
     fun followUser(currentUserId: String, otherUserId: String, callback: (Boolean, String) -> Unit) {
         friendRepo?.sendFriendRequest(currentUserId, otherUserId) { success, message ->
             if (success) {
-                // For "Follow", we might want to automatically accept it or just mark as followed
-                // Here we use the existing friend request logic but treat "accepted" as "followed"
-                // To simplify for "Follow", let's just send and then immediately check/update status if needed
-                // Or you can create a specific follow function in Repo. 
-                // For now, let's just send request and update UI state.
                 _isFollowing.postValue(true)
             }
+            callback(success, message)
+        }
+    }
+
+    fun getPendingRequests(userId: String) {
+        friendRepo?.getPendingRequests(userId) { success, _, requests ->
+            if (success) {
+                _pendingRequests.postValue(requests)
+            }
+        }
+    }
+
+    fun acceptRequest(requestId: String, callback: (Boolean, String) -> Unit) {
+        friendRepo?.acceptFriendRequest(requestId) { success, message ->
+            callback(success, message)
+        }
+    }
+
+    fun declineRequest(requestId: String, callback: (Boolean, String) -> Unit) {
+        friendRepo?.cancelFriendRequest(requestId) { success, message ->
             callback(success, message)
         }
     }

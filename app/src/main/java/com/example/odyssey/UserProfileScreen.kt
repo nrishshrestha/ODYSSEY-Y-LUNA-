@@ -48,7 +48,7 @@ class UserProfileScreen : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserProfileBody(targetUserId: String? = null) {
+fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
     val context = LocalContext.current
     val currentUser = FirebaseAuth.getInstance().currentUser
     val currentUserId = currentUser?.uid ?: ""
@@ -86,30 +86,11 @@ fun UserProfileBody(targetUserId: String? = null) {
         }
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(userData?.email ?: "Profile", fontWeight = FontWeight.Bold)
-                },
-                navigationIcon = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.MoreVert, null)
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-
+    val content = @Composable { paddingValues: PaddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(paddingValues)
         ) {
 
             ProfileHeader(profileImageUrl)
@@ -136,6 +117,32 @@ fun UserProfileBody(targetUserId: String? = null) {
             TabSection()
             PostGrid()
         }
+    }
+
+    if (showTopBar) {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(userData?.email ?: "Profile", fontWeight = FontWeight.Bold)
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {}) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Default.MoreVert, null)
+                        }
+                    }
+                )
+            }
+        ) { innerPadding ->
+            content(innerPadding)
+        }
+    } else {
+        content(PaddingValues(0.dp))
     }
 
     if (showEditDialog && userData != null && isOwnProfile) {

@@ -43,7 +43,7 @@ class SearchActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen() {
+fun SearchScreen(showTopBar: Boolean = true) {
     val context = LocalContext.current
     val userViewModel = remember { UserViewModel(UserRepoImpl()) }
     var searchQuery by remember { mutableStateOf("") }
@@ -68,17 +68,11 @@ fun SearchScreen() {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Search Users", fontWeight = FontWeight.Bold) }
-            )
-        }
-    ) { innerPadding ->
+    val content = @Composable { paddingValues: PaddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(paddingValues)
                 .padding(16.dp)
         ) {
             OutlinedTextField(
@@ -117,6 +111,20 @@ fun SearchScreen() {
                 }
             }
         }
+    }
+
+    if (showTopBar) {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text("Search Users", fontWeight = FontWeight.Bold) }
+                )
+            }
+        ) { innerPadding ->
+            content(innerPadding)
+        }
+    } else {
+        content(PaddingValues(0.dp))
     }
 }
 
