@@ -8,8 +8,8 @@ data class UserModel(
     val gender: String = "",
     val dob: String = "",
     var imageUrl : String = "",
-
-    ) {
+    val bio: String = ""
+) {
     fun toMap() : Map<String,Any?> {
         return mapOf(
             "userId" to userId,
@@ -19,6 +19,7 @@ data class UserModel(
             "gender" to gender,
             "dob" to dob,
             "imageUrl" to imageUrl,
+            "bio" to bio
         )
     }
 }
