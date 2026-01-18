@@ -1,11 +1,19 @@
 package com.example.odyssey
 
 import android.Manifest
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Note
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -20,56 +28,111 @@ fun CreateScreen(
 ) {
     val context = LocalContext.current
 
-    // Location permissions
-    val permissionsState = rememberMultiplePermissionsState(
+    // Permissions
+    val locationPermissions = rememberMultiplePermissionsState(
         permissions = listOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
         )
     )
 
-    // Request permissions and get current location
-    LaunchedEffect(permissionsState.allPermissionsGranted) {
-        if (!permissionsState.allPermissionsGranted) {
-            permissionsState.launchMultiplePermissionRequest()
+    // Photo picker
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.uploadAndSavePhoto(context, uri)
+        }
+    }
+
+    // Request location permissions
+    LaunchedEffect(locationPermissions.allPermissionsGranted) {
+        if (!locationPermissions.allPermissionsGranted) {
+            locationPermissions.launchMultiplePermissionRequest()
         } else {
-            // Get current location when permissions are granted
             viewModel.getCurrentLocation(context)
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Map with current location
+        // Map
         BaatoMap(
-            routePoints = viewModel.routePoints,
+            routePoints = viewModel.getLatLngPoints(),
             currentLocation = viewModel.currentLocation.value,
             modifier = Modifier.fillMaxSize()
         )
 
-        // Record button at bottom
-        Button(
-            onClick = {
-                if (permissionsState.allPermissionsGranted) {
-                    if (viewModel.isRecording.value) {
-                        viewModel.stopRecording()
-                    } else {
-                        viewModel.startRecording(context)
-                    }
-                } else {
-                    permissionsState.launchMultiplePermissionRequest()
-                }
-            },
+        // Recording controls (bottom)
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = if (viewModel.isRecording.value) "Stop Recording" else "Record"
-            )
+            // Note and Photo buttons (only show while recording)
+            if (viewModel.isRecording.value) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Add Note Button
+                    FloatingActionButton(
+                        onClick = { viewModel.openNoteDialog() }
+                    ) {
+                        Icon(Icons.Default.Note, contentDescription = "Add Note")
+                    }
+
+                    // Add Photo Button - FIXED VERSION
+                    FloatingActionButton(
+                        onClick = {
+                            if (!viewModel.isUploadingPhoto.value) {
+                                photoPickerLauncher.launch("image/*")
+                            }
+                        },
+                        modifier = Modifier.alpha(if (viewModel.isUploadingPhoto.value) 0.5f else 1f)
+                    ) {
+                        if (viewModel.isUploadingPhoto.value) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(Icons.Default.CameraAlt, contentDescription = "Add Photo")
+                        }
+                    }
+                }
+
+                // Upload progress
+                if (viewModel.isUploadingPhoto.value) {
+                    Text(
+                        text = "Uploading... ${viewModel.uploadProgress.value}%",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
+            // Record/Stop Button
+            Button(
+                onClick = {
+                    if (locationPermissions.allPermissionsGranted) {
+                        if (viewModel.isRecording.value) {
+                            viewModel.stopRecording()
+                        } else {
+                            viewModel.startRecording(context)
+                        }
+                    } else {
+                        locationPermissions.launchMultiplePermissionRequest()
+                    }
+                }
+            ) {
+                Text(
+                    text = if (viewModel.isRecording.value) "Stop Recording" else "Record"
+                )
+            }
         }
 
-        // Permission message if not granted
-        if (!permissionsState.allPermissionsGranted) {
+        // Permission message
+        if (!locationPermissions.allPermissionsGranted) {
             Card(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -81,5 +144,85 @@ fun CreateScreen(
                 )
             }
         }
+    }
+
+    // === DIALOGS ===
+
+    // Note Dialog
+    if (viewModel.showNoteDialog.value) {
+        AlertDialog(
+            onDismissRequest = { viewModel.closeNoteDialog() },
+            title = { Text("Add Note") },
+            text = {
+                OutlinedTextField(
+                    value = viewModel.pendingNote.value,
+                    onValueChange = { viewModel.updatePendingNote(it) },
+                    label = { Text("Note") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 5
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.saveNote() }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.closeNoteDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Save Route Dialog
+    if (viewModel.showSaveRouteDialog.value) {
+        AlertDialog(
+            onDismissRequest = { viewModel.closeSaveRouteDialog() },
+            title = { Text("Save Route") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = viewModel.routeTitle.value,
+                        onValueChange = { viewModel.updateRouteTitle(it) },
+                        label = { Text("Route Title*") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = viewModel.routeDescription.value,
+                        onValueChange = { viewModel.updateRouteDescription(it) },
+                        label = { Text("Description (optional)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 3
+                    )
+                    Text(
+                        text = "Points recorded: ${viewModel.routePoints.size}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.saveRouteToFirebase(
+                            onSuccess = {
+                                Toast.makeText(context, "Route saved successfully!", Toast.LENGTH_SHORT).show()
+                            },
+                            onError = { exception ->
+                                Toast.makeText(context, "Failed to save: ${exception.message}", Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.closeSaveRouteDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
