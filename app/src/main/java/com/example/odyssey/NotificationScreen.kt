@@ -90,6 +90,7 @@ fun NotificationCard(
     var senderData by remember { mutableStateOf<UserModel?>(null) }
     val context = LocalContext.current
     val requestId = notification.metadata["requestId"]
+    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
     LaunchedEffect(notification.fromUserId) {
         UserRepoImpl().getUserByID(notification.fromUserId) { success, _, user ->
@@ -155,8 +156,17 @@ fun NotificationCard(
                     OutlinedButton(
                         onClick = {
                             userViewModel.declineRequest(requestId) { success, msg ->
+                                if (success) {
+                                    notificationViewModel.updateNotification(
+                                        notification.id,
+                                        mapOf(
+                                            "content" to "Follow request declined",
+                                            "type" to "FOLLOW_DECLINED",
+                                            "isRead" to true
+                                        )
+                                    )
+                                }
                                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                notificationViewModel.markNotificationAsRead(notification.id)
                             }
                         },
                         modifier = Modifier.height(32.dp),
@@ -171,8 +181,29 @@ fun NotificationCard(
                     Button(
                         onClick = {
                             userViewModel.acceptRequest(requestId) { success, msg ->
+                                if (success) {
+                                    // Update current notification
+                                    notificationViewModel.updateNotification(
+                                        notification.id,
+                                        mapOf(
+                                            "content" to "Follow request accepted",
+                                            "type" to "FOLLOW_ACCEPTED",
+                                            "isRead" to true
+                                        )
+                                    )
+                                    
+                                    // Send notification to the sender
+                                    val replyNotification = NotificationModel(
+                                        fromUserId = currentUserId,
+                                        toUserId = notification.fromUserId,
+                                        type = "FOLLOW_ACCEPTED_REPLY",
+                                        content = "accepted your follow request",
+                                        timestamp = System.currentTimeMillis(),
+                                        isRead = false
+                                    )
+                                    notificationViewModel.sendNotification(replyNotification)
+                                }
                                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                notificationViewModel.markNotificationAsRead(notification.id)
                             }
                         },
                         modifier = Modifier.height(32.dp),

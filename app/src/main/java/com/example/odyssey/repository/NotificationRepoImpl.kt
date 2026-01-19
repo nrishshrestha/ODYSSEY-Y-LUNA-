@@ -38,4 +38,11 @@ class NotificationRepoImpl : NotificationRepo {
             else callback(false, it.exception?.message ?: "Failed")
         }
     }
+
+    override fun updateNotification(notificationId: String, updates: Map<String, Any>, callback: (Boolean, String) -> Unit) {
+        ref.child(notificationId).updateChildren(updates).addOnCompleteListener {
+            if (it.isSuccessful) callback(true, "Notification updated")
+            else callback(false, it.exception?.message ?: "Failed to update")
+        }
+    }
 }

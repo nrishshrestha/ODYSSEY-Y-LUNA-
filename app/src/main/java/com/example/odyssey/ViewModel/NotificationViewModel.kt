@@ -27,4 +27,12 @@ class NotificationViewModel(private val repository: NotificationRepo = Notificat
     fun markNotificationAsRead(notificationId: String) {
         repository.markAsRead(notificationId) { _, _ -> }
     }
+
+    fun sendNotification(notification: NotificationModel, callback: (Boolean, String) -> Unit = { _, _ -> }) {
+        repository.sendNotification(notification, callback)
+    }
+
+    fun updateNotification(notificationId: String, updates: Map<String, Any>, callback: (Boolean, String) -> Unit = { _, _ -> }) {
+        repository.updateNotification(notificationId, updates, callback)
+    }
 }
