@@ -3,13 +3,19 @@ package com.example.odyssey.ViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.odyssey.model.FriendModel
 import com.example.odyssey.model.UserModel
-import com.example.odyssey.repository.UserRepository
+import com.example.odyssey.repository.FriendRepo
+import com.example.odyssey.repository.UserRepo
 
-class UserViewModel (val repository: UserRepository) : ViewModel(){
+class UserViewModel (val repository: UserRepo, val friendRepo: FriendRepo? = null) : ViewModel(){
     private val _user = MutableLiveData<UserModel?>()
     val user: LiveData<UserModel?>
         get() = _user
+
+    private val _otherUser = MutableLiveData<UserModel?>()
+    val otherUser: LiveData<UserModel?>
+        get() = _otherUser
 
     private val _allUsers = MutableLiveData<List<UserModel?>>()
     val allUsers: LiveData<List<UserModel?>>
@@ -18,6 +24,12 @@ class UserViewModel (val repository: UserRepository) : ViewModel(){
     private val _loading = MutableLiveData<Boolean>()
     val loading: LiveData<Boolean>
         get() = _loading
+
+    private val _isFollowing = MutableLiveData<Boolean>()
+    val isFollowing: LiveData<Boolean> = _isFollowing
+
+    private val _pendingRequests = MutableLiveData<List<FriendModel?>>()
+    val pendingRequests: LiveData<List<FriendModel?>> = _pendingRequests
 
     fun login(email:String,password:String,callback:(Boolean,String) -> Unit) {
         repository.login(email,password,callback)
@@ -44,6 +56,15 @@ class UserViewModel (val repository: UserRepository) : ViewModel(){
         }
     }
 
+    fun getOtherUserByID(userId:String) {
+        repository.getUserByID(userId) {
+                success, message, data ->
+            if (success) {
+                _otherUser.postValue(data)
+            }
+        }
+    }
+
     fun getAllUser() {
         _loading.postValue(true)
         repository.getAllUser { success, message, data ->
@@ -61,5 +82,46 @@ class UserViewModel (val repository: UserRepository) : ViewModel(){
 
     fun deleteAccount(userId: String,callback: (Boolean, String) -> Unit) {
         repository.deleteAccount(userId,callback)
+    }
+
+    fun checkFollowingStatus(currentUserId: String, otherUserId: String) {
+        friendRepo?.getFriends(currentUserId) { success, _, friends ->
+            if (success) {
+                val following = friends.any {
+                    (it?.fromUserId == currentUserId && it.toUserId == otherUserId) ||
+                    (it?.fromUserId == otherUserId && it.toUserId == currentUserId)
+                }
+                _isFollowing.postValue(following)
+            }
+        }
+    }
+
+    fun followUser(currentUserId: String, otherUserId: String, callback: (Boolean, String) -> Unit) {
+        friendRepo?.sendFriendRequest(currentUserId, otherUserId) { success, message ->
+            if (success) {
+                _isFollowing.postValue(true)
+            }
+            callback(success, message)
+        }
+    }
+
+    fun getPendingRequests(userId: String) {
+        friendRepo?.getPendingRequests(userId) { success, _, requests ->
+            if (success) {
+                _pendingRequests.postValue(requests)
+            }
+        }
+    }
+
+    fun acceptRequest(requestId: String, callback: (Boolean, String) -> Unit) {
+        friendRepo?.acceptFriendRequest(requestId) { success, message ->
+            callback(success, message)
+        }
+    }
+
+    fun declineRequest(requestId: String, callback: (Boolean, String) -> Unit) {
+        friendRepo?.cancelFriendRequest(requestId) { success, message ->
+            callback(success, message)
+        }
     }
 }

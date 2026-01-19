@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,9 +22,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -30,11 +34,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.odyssey.ViewModel.ProfileViewModel
+import com.example.odyssey.ViewModel.NotificationViewModel
+import com.example.odyssey.ViewModel.UserViewModel
+import com.example.odyssey.repository.FriendRepoImpl
+import com.example.odyssey.repository.UserRepoImpl
 import com.example.odyssey.ui.theme.ODYSSEYTheme
+import com.google.firebase.auth.FirebaseAuth
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,9 +54,7 @@ class DashboardActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = androidx.compose.material3.MaterialTheme.colorScheme.background
                 ) {
-                    // Create ViewModel at Activity scope so it persists across navigation
-                    val profileViewModel: ProfileViewModel = viewModel()
-                    DashboardBody(profileViewModel)
+                    DashboardBody()
                 }
             }
         }
@@ -58,11 +63,25 @@ class DashboardActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardBody(profileViewModel: ProfileViewModel) {
+fun DashboardBody() {
 
     data class NavItem(val label: String, val icon: Int)
 
     var selectedItem by remember { mutableIntStateOf(0) }
+    var showNotifications by remember { mutableStateOf(false) }
+    var showSearch by remember { mutableStateOf(false) }
+
+    val userViewModel = remember { UserViewModel(UserRepoImpl(), FriendRepoImpl(UserRepoImpl())) }
+    val notificationViewModel = remember { NotificationViewModel() }
+    
+    val unreadCount by notificationViewModel.unreadCount.observeAsState(0)
+    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+    LaunchedEffect(currentUserId) {
+        if (currentUserId.isNotEmpty()) {
+            notificationViewModel.fetchNotifications(currentUserId)
+        }
+    }
 
     val navList = listOf(
         NavItem("Home", R.drawable.baseline_home_24),
@@ -71,14 +90,17 @@ fun DashboardBody(profileViewModel: ProfileViewModel) {
         NavItem("Friends", R.drawable.baseline_people_24),
         NavItem("Profile", R.drawable.baseline_person_24),
     )
-    val userModel by profileViewModel.user.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    if (selectedItem != 0) {
-                        IconButton(onClick = { /* handle back */ }) {
+                    if (selectedItem != 0 || showNotifications || showSearch) {
+                        IconButton(onClick = { 
+                            if (showNotifications) showNotifications = false 
+                            else if (showSearch) showSearch = false
+                            else selectedItem = 0 
+                        }) {
                             Icon(
                                 painter = painterResource(R.drawable.baseline_arrow_back_ios_new_24),
                                 contentDescription = "Back"
@@ -86,7 +108,19 @@ fun DashboardBody(profileViewModel: ProfileViewModel) {
                         }
                     }
                 },
-                title = { Header() }
+                title = { 
+                    Header(
+                        onNotificationClick = { 
+                            showNotifications = true
+                            showSearch = false
+                        },
+                        onSearchClick = {
+                            showSearch = true
+                            showNotifications = false
+                        },
+                        unreadCount = unreadCount
+                    ) 
+                }
             )
         },
         bottomBar = {
@@ -102,8 +136,10 @@ fun DashboardBody(profileViewModel: ProfileViewModel) {
                         label = { Text(item.label) },
                         onClick = {
                             selectedItem = index
+                            showNotifications = false
+                            showSearch = false
                         },
-                        selected = selectedItem == index
+                        selected = !showNotifications && !showSearch && selectedItem == index
                     )
                 }
             }
@@ -114,22 +150,30 @@ fun DashboardBody(profileViewModel: ProfileViewModel) {
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            when (selectedItem) {
-                0 -> HomeScreen()
-                1 -> Text(text = "Trips")
-                2 -> CreateScreen()
-                3 -> Text(text = "Friends")
-                4 -> {
-                    // Pass the same ViewModel instance
-                    ProfileScreen(profileViewModel = profileViewModel)
+            if (showNotifications) {
+                NotificationScreen(
+                    showTopBar = false,
+                    notificationViewModel = notificationViewModel,
+                    userViewModel = userViewModel
+                )
+            } else if (showSearch) {
+                SearchScreen(showTopBar = false)
+            } else {
+                when (selectedItem) {
+                    0 -> HomeScreen()
+                    1 -> Text(text = "Trips")
+                    2 -> Text(text = "Create")
+                    3 -> FriendsScreen()
+                    4 -> UserProfileBody(showTopBar = false)
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Header() {
+fun Header(onNotificationClick: () -> Unit, onSearchClick: () -> Unit, unreadCount: Int) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -140,17 +184,33 @@ fun Header() {
             Text("Let's Travel", fontSize = 14.sp, color = Color.Gray)
         }
         Row {
-            IconButton(onClick = {}) {
+            IconButton(onClick = onSearchClick) {
                 Icon(
                     painter = painterResource(id = R.drawable.baseline_search_24),
                     contentDescription = "Search"
                 )
             }
-            IconButton(onClick = {}) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_notifications_24),
-                    contentDescription = "Notifications"
-                )
+            IconButton(onClick = onNotificationClick) {
+                BadgedBox(
+                    badge = {
+                        if (unreadCount > 0) {
+                            Badge(
+                                containerColor = Color.Red,
+                                contentColor = Color.White
+                            ) {
+                                Text(
+                                    text = if (unreadCount > 9) "9+" else unreadCount.toString(),
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_notifications_24),
+                        contentDescription = "Notifications"
+                    )
+                }
             }
         }
     }
