@@ -13,7 +13,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
 
-class UserRepoImpl : UserRepository {
+class UserRepoImpl : UserRepo {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
@@ -104,8 +104,14 @@ class UserRepoImpl : UserRepository {
     override fun getAllUser(callback: (Boolean, String, List<UserModel?>) -> Unit) {
         ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val allUser = arrayListOf<UserModel>()
-
+                val allUsers = arrayListOf<UserModel>()
+                for (childSnapshot in snapshot.children) {
+                    val user = childSnapshot.getValue(UserModel::class.java)
+                    if (user != null) {
+                        allUsers.add(user)
+                    }
+                }
+                callback(true, "Users fetched successfully", allUsers)
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -119,14 +125,7 @@ class UserRepoImpl : UserRepository {
         model: UserModel,
         callback: (Boolean, String) -> Unit
     ) {
-        val userMap = mapOf(
-            "userId" to model.userId,
-            "firstName" to model.firstName,
-            "lastName" to model.lastName,
-            "email" to model.email,
-            "gender" to model.gender,
-            "dob" to model.dob
-        )
+        val userMap = model.toMap()
         ref.child(userId).updateChildren(userMap).addOnCompleteListener {
             if (it.isSuccessful) {
                 callback(true, "Profile updated successfully")
