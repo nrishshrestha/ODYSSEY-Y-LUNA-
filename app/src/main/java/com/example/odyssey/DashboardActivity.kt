@@ -162,7 +162,7 @@ fun DashboardBody() {
                 when (selectedItem) {
                     0 -> HomeScreen()
                     1 -> Text(text = "Trips")
-                    2 -> Text(text = "Create")
+                    2 -> CreateScreen()
                     3 -> FriendsScreen()
                     4 -> UserProfileBody(showTopBar = false)
                 }
