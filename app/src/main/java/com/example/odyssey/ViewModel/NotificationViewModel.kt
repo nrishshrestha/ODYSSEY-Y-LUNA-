@@ -15,7 +15,11 @@ class NotificationViewModel(private val repository: NotificationRepo = Notificat
     private val _unreadCount = MutableLiveData<Int>()
     val unreadCount: LiveData<Int> = _unreadCount
 
+    private var isFetching = false
+
     fun fetchNotifications(userId: String) {
+        if (isFetching) return
+        isFetching = true
         repository.getNotifications(userId) { success, _, list ->
             if (success) {
                 _notifications.postValue(list)
@@ -25,6 +29,14 @@ class NotificationViewModel(private val repository: NotificationRepo = Notificat
     }
 
     fun markNotificationAsRead(notificationId: String) {
+        // Immediate local update for better UX
+        val currentList = _notifications.value ?: emptyList()
+        val updatedList = currentList.map {
+            if (it.id == notificationId) it.copy(isRead = true) else it
+        }
+        _notifications.postValue(updatedList)
+        _unreadCount.postValue(updatedList.count { !it.isRead })
+
         repository.markAsRead(notificationId) { _, _ -> }
     }
 
@@ -33,10 +45,33 @@ class NotificationViewModel(private val repository: NotificationRepo = Notificat
     }
 
     fun updateNotification(notificationId: String, updates: Map<String, Any>, callback: (Boolean, String) -> Unit = { _, _ -> }) {
+        // If updates contains isRead=true, we can also update locally
+        if (updates["isRead"] == true) {
+            val currentList = _notifications.value ?: emptyList()
+            val updatedList = currentList.map {
+                if (it.id == notificationId) {
+                    // This is a bit tricky since updates is a Map, but we know what we expect
+                    it.copy(
+                        isRead = true,
+                        content = (updates["content"] as? String) ?: it.content,
+                        type = (updates["type"] as? String) ?: it.type
+                    )
+                } else it
+            }
+            _notifications.postValue(updatedList)
+            _unreadCount.postValue(updatedList.count { !it.isRead })
+        }
+        
         repository.updateNotification(notificationId, updates, callback)
     }
 
     fun markAllAsRead(userId: String) {
+        // Immediate local update for better UX
+        val currentList = _notifications.value ?: emptyList()
+        val updatedList = currentList.map { it.copy(isRead = true) }
+        _notifications.postValue(updatedList)
+        _unreadCount.postValue(0)
+
         repository.markAllAsRead(userId) { _, _ -> }
     }
 }
