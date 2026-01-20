@@ -1,5 +1,7 @@
 package com.example.odyssey.ViewModel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -31,6 +33,12 @@ class UserViewModel (val repository: UserRepo, val friendRepo: FriendRepo? = nul
     private val _pendingRequests = MutableLiveData<List<FriendModel?>>()
     val pendingRequests: LiveData<List<FriendModel?>> = _pendingRequests
 
+    private val _followersCount = MutableLiveData<Int>(0)
+    val followersCount: LiveData<Int> = _followersCount
+
+    private val _followingCount = MutableLiveData<Int>(0)
+    val followingCount: LiveData<Int> = _followingCount
+
     fun login(email:String,password:String,callback:(Boolean,String) -> Unit) {
         repository.login(email,password,callback)
     }
@@ -52,6 +60,7 @@ class UserViewModel (val repository: UserRepo, val friendRepo: FriendRepo? = nul
                 success, message, data ->
             if (success) {
                 _user.postValue(data)
+                fetchStats(userId)
             }
         }
     }
@@ -61,6 +70,7 @@ class UserViewModel (val repository: UserRepo, val friendRepo: FriendRepo? = nul
                 success, message, data ->
             if (success) {
                 _otherUser.postValue(data)
+                fetchStats(userId)
             }
         }
     }
@@ -122,6 +132,19 @@ class UserViewModel (val repository: UserRepo, val friendRepo: FriendRepo? = nul
     fun declineRequest(requestId: String, callback: (Boolean, String) -> Unit) {
         friendRepo?.cancelFriendRequest(requestId) { success, message ->
             callback(success, message)
+        }
+    }
+
+    fun uploadImage(context: Context, uri: Uri) {
+        repository.uploadImageToCloudinary(context, uri)
+    }
+
+    private fun fetchStats(userId: String) {
+        friendRepo?.getFollowersCount(userId) { count ->
+            _followersCount.postValue(count)
+        }
+        friendRepo?.getFollowingCount(userId) { count ->
+            _followingCount.postValue(count)
         }
     }
 }
