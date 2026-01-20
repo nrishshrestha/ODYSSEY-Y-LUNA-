@@ -21,9 +21,9 @@
         android:theme="@style/Theme.ODYSSEY"
         tools:replace="android:fullBackupContent">
         <activity
-            android:name=".SplashActivity"
+            android:name=".UserProfileScreen"
             android:exported="true"
-            android:label="@string/title_activity_splash"
+            android:label="@string/title_activity_user_profile_screen"
             android:theme="@style/Theme.ODYSSEY">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,11 +31,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ViewModel.SplashActivity"
-            android:exported="false"
-            android:label="@string/title_activity_splash"
-            android:theme="@style/Theme.ODYSSEY" />
         <activity
             android:name=".ForgetPasswordActivity"
             android:exported="true"
@@ -62,6 +57,17 @@
             android:name=".DashboardActivity"
             android:exported="true"
             android:label="@string/title_activity_dashboard"
+            android:theme="@style/Theme.ODYSSEY">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".SearchActivity"
+            android:exported="true"
+            android:label="@string/title_activity_search_user"
             android:theme="@style/Theme.ODYSSEY">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -208,4 +209,10 @@ fun ProfileScreenBody(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun ProfileScreenPreview(){
+    ProfileScreenBody( null, null, false, null, {})
 }

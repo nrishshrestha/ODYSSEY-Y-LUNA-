@@ -15,6 +15,7 @@ object CloudinaryManager {
 
     private const val CLOUD_NAME = "dk1890isv"
     private const val UPLOAD_PRESET = "odyssey_profile_upload"
+    private const val ROUTE_PHOTO_PRESET = "odyssey_route_photos"
 
     private fun ensureInit(context: Context) {
         try {
@@ -77,6 +78,62 @@ object CloudinaryManager {
                 .dispatch()
         } catch (e: Exception) {
             Log.e(TAG, "uploadImage exception: ${e.message}", e)
+            onError(e)
+        }
+    }
+
+    fun uploadRoutePhoto(
+        context: Context,
+        imageUri: Uri,
+        onProgress: (Int) -> Unit = {},
+        onSuccess: (String) -> Unit,
+        onError: (Exception) -> Unit = {}
+    ) {
+        try {
+            ensureInit(context)
+            val filePath = getFilePathForUpload(context, imageUri)
+            MediaManager.get().upload(filePath)
+                .unsigned(ROUTE_PHOTO_PRESET) // Use route-specific preset
+                .option("resource_type", "image")
+                .option("folder", "odyssey/routes") // Organize in folders
+                .callback(object : UploadCallback {
+                    override fun onStart(requestId: String?) {
+                        Log.d(TAG, "Route photo upload start: $requestId")
+                        onProgress(0)
+                    }
+
+                    override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {
+                        val progress = ((bytes.toFloat() / totalBytes.toFloat()) * 100).toInt()
+                        onProgress(progress)
+                        Log.d(TAG, "Upload progress: $progress%")
+                    }
+
+                    override fun onSuccess(requestId: String?, resultData: MutableMap<Any?, Any?>?) {
+                        val url = (resultData?.get("secure_url") ?: resultData?.get("url")) as? String
+                        if (!url.isNullOrEmpty()) {
+                            Log.d(TAG, "Route photo upload success: $url")
+                            onProgress(100)
+                            onSuccess(url)
+                        } else {
+                            onError(Exception("Cloudinary returned no URL"))
+                        }
+                    }
+
+                    override fun onError(requestId: String?, error: ErrorInfo?) {
+                        val msg = error?.description ?: "Unknown Cloudinary error"
+                        Log.e(TAG, "Route photo upload error: $msg")
+                        onError(Exception(msg))
+                    }
+
+                    override fun onReschedule(requestId: String?, error: ErrorInfo?) {
+                        val msg = error?.description ?: "Cloudinary reschedule"
+                        Log.w(TAG, "Route photo upload rescheduled: $msg")
+                        onError(Exception(msg))
+                    }
+                })
+                .dispatch()
+        } catch (e: Exception) {
+            Log.e(TAG, "uploadRoutePhoto exception: ${e.message}", e)
             onError(e)
         }
     }
