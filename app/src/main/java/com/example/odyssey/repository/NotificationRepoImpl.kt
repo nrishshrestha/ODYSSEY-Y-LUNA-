@@ -45,4 +45,29 @@ class NotificationRepoImpl : NotificationRepo {
             else callback(false, it.exception?.message ?: "Failed to update")
         }
     }
+
+    override fun markAllAsRead(userId: String, callback: (Boolean, String) -> Unit) {
+        ref.orderByChild("toUserId").equalTo(userId).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val updates = mutableMapOf<String, Any>()
+                for (child in snapshot.children) {
+                    val isRead = child.child("isRead").getValue(Boolean::class.java) ?: false
+                    if (!isRead) {
+                        updates["${child.key}/isRead"] = true
+                    }
+                }
+                if (updates.isNotEmpty()) {
+                    ref.updateChildren(updates).addOnCompleteListener {
+                        if (it.isSuccessful) callback(true, "All marked as read")
+                        else callback(false, it.exception?.message ?: "Failed")
+                    }
+                } else {
+                    callback(true, "No unread notifications")
+                }
+            }
+            override fun onCancelled(error: DatabaseError) {
+                callback(false, error.message)
+            }
+        })
+    }
 }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -73,11 +74,34 @@ fun NotificationScreen(
     if (showTopBar) {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(title = { Text("Notifications", fontWeight = FontWeight.Bold) })
+                CenterAlignedTopAppBar(
+                    title = { Text("Notifications", fontWeight = FontWeight.Bold) },
+                    actions = {
+                        if (notifications.any { !it.isRead }) {
+                            IconButton(onClick = {
+                                notificationViewModel.markAllAsRead(currentUserId)
+                            }) {
+                                Icon(Icons.Default.DoneAll, contentDescription = "Mark all as read")
+                            }
+                        }
+                    }
+                )
             }
         ) { padding -> content(padding) }
     } else {
-        content(PaddingValues(0.dp))
+        Column {
+            if (notifications.any { !it.isRead }) {
+                TextButton(
+                    onClick = { notificationViewModel.markAllAsRead(currentUserId) },
+                    modifier = Modifier.align(Alignment.End).padding(end = 16.dp)
+                ) {
+                    Icon(Icons.Default.DoneAll, null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Mark all as read", fontSize = 12.sp)
+                }
+            }
+            content(PaddingValues(0.dp))
+        }
     }
 }
 

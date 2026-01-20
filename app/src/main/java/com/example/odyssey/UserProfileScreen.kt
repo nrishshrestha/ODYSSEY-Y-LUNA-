@@ -1,5 +1,6 @@
 package com.example.odyssey
 
+import android.app.Activity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -131,7 +132,11 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
                         Text(userData?.email ?: "Profile", fontWeight = FontWeight.Bold)
                     },
                     navigationIcon = {
-                        IconButton(onClick = {}) {
+                        IconButton(onClick = {
+                            if (context is Activity) {
+                                context.onBackPressedDispatcher.onBackPressed()
+                            }
+                        }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                         }
                     },
