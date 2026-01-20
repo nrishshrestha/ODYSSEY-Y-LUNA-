@@ -14,6 +14,9 @@ import com.example.odyssey.model.RoutePointModel
 import com.example.odyssey.model.RouteModel
 import com.example.odyssey.utils.CloudinaryManager
 import java.util.UUID
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.*
 
 class CreateRouteViewModel : ViewModel() {
 
@@ -53,8 +56,12 @@ class CreateRouteViewModel : ViewModel() {
     var routeDescription = mutableStateOf("")
         private set
 
+    var timerDisplay = mutableStateOf("00:00:00")
+        private set
+
     // Recording metadata
     private var recordingStartTime = 0L
+    private var timerJob: Job? = null
 
     // Firebase - Using Realtime Database instead of Firestore
     private val database = FirebaseDatabase.getInstance()
@@ -128,6 +135,8 @@ class CreateRouteViewModel : ViewModel() {
         routePoints.clear()
         recordingStartTime = System.currentTimeMillis()
 
+        startTimer()
+
         android.util.Log.d("CreateRouteViewModel", "Recording started at $recordingStartTime")
 
         if (fusedLocationClient == null) {
@@ -177,6 +186,7 @@ class CreateRouteViewModel : ViewModel() {
 
     fun stopRecording() {
         isRecording.value = false
+        stopTimer()
         locationCallback?.let {
             fusedLocationClient?.removeLocationUpdates(it)
         }
@@ -359,8 +369,37 @@ class CreateRouteViewModel : ViewModel() {
         return routePoints.map { it.toLatLng() }
     }
 
+    // === TIMER FUNCTIONS ===
+    private fun startTimer() {
+        // Reset timer display
+        timerDisplay.value = "00:00:00"
+
+        // Start coroutine that updates every second
+        timerJob = CoroutineScope(Dispatchers.Main).launch {
+            while (isActive) {
+                val elapsed = System.currentTimeMillis() - recordingStartTime
+                timerDisplay.value = formatDuration(elapsed)
+                delay(1000) // Update every second
+            }
+        }
+    }
+
+    private fun stopTimer() {
+        timerJob?.cancel()
+        timerJob = null
+    }
+
+    private fun formatDuration(milliseconds: Long): String {
+        val seconds = (milliseconds / 1000) % 60
+        val minutes = (milliseconds / (1000 * 60)) % 60
+        val hours = (milliseconds / (1000 * 60 * 60))
+
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    }
+
     override fun onCleared() {
         super.onCleared()
+        stopTimer()
         stopRecording()
         fusedLocationClient = null
     }
