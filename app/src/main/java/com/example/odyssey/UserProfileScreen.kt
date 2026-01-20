@@ -3,8 +3,10 @@ package com.example.odyssey
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -61,6 +63,8 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
     
     val userData by if (isOwnProfile) userViewModel.user.observeAsState() else userViewModel.otherUser.observeAsState()
     val isFollowing by userViewModel.isFollowing.observeAsState(false)
+    val followersCount by userViewModel.followersCount.observeAsState(0)
+    val followingCount by userViewModel.followingCount.observeAsState(0)
 
     var name by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
@@ -93,7 +97,7 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
                 .padding(paddingValues)
         ) {
 
-            ProfileHeader(profileImageUrl)
+            ProfileHeader(profileImageUrl, followersCount, followingCount)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -148,6 +152,7 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
     if (showEditDialog && userData != null && isOwnProfile) {
         EditProfileDialog(
             userModel = userData!!,
+            userViewModel = userViewModel,
             onSave = { updatedModel ->
                 userViewModel.editProfile(currentUserId, updatedModel) { success, message ->
                     if (success) {
@@ -164,7 +169,7 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
 }
 
 @Composable
-fun ProfileHeader(imageUrl: String) {
+fun ProfileHeader(imageUrl: String, followers: Int, following: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,9 +192,9 @@ fun ProfileHeader(imageUrl: String) {
             modifier = Modifier.weight(3f),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            UserStats("Trips", "125")
-            UserStats("Followers", "1.2k")
-            UserStats("Following", "350")
+            UserStats("Trips", "0")
+            UserStats("Followers", followers.toString())
+            UserStats("Following", following.toString())
         }
     }
 }
@@ -278,6 +283,7 @@ fun ProfileActions(
 @Composable
 fun EditProfileDialog(
     userModel: UserModel,
+    userViewModel: UserViewModel,
     onSave: (UserModel) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -285,6 +291,18 @@ fun EditProfileDialog(
     var lastName by remember { mutableStateOf(userModel.lastName) }
     var bio by remember { mutableStateOf(userModel.bio) }
     var imageUrl by remember { mutableStateOf(userModel.imageUrl) }
+    val context = LocalContext.current
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            userViewModel.uploadImage(context, it)
+            // Note: The UI will update automatically via the getUserByID listener 
+            // once Firebase updates, but we can set it locally for instant feedback if needed.
+            imageUrl = it.toString() 
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -292,39 +310,50 @@ fun EditProfileDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                AsyncImage(
-                    model = imageUrl.ifEmpty { "https://via.placeholder.com/150" },
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .align(Alignment.CenterHorizontally),
-                    contentScale = ContentScale.Crop
-                )
+                Box(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    AsyncImage(
+                        model = imageUrl.ifEmpty { "https://via.placeholder.com/150" },
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, Color(0xFF3460FB), CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                }
 
-                OutlinedTextField(
-                    value = imageUrl,
-                    onValueChange = { imageUrl = it },
-                    label = { Text("Profile Picture URL") }
-                )
+                Button(
+                    onClick = { galleryLauncher.launch("image/*") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE3F2FD), contentColor = Color(0xFF3460FB))
+                ) {
+                    Text("Change Profile Picture")
+                }
 
                 OutlinedTextField(
                     value = firstName,
                     onValueChange = { firstName = it },
-                    label = { Text("First Name") }
+                    label = { Text("First Name") },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 
                 OutlinedTextField(
                     value = lastName,
                     onValueChange = { lastName = it },
-                    label = { Text("Last Name") }
+                    label = { Text("Last Name") },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
                     value = bio,
                     onValueChange = { bio = it },
                     label = { Text("Bio") },
-                    maxLines = 4
+                    maxLines = 4,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
@@ -367,25 +396,30 @@ fun TabSection() {
 
 @Composable
 fun PostGrid() {
-    val dummyImages = List(15) {
+    val dummyImages = List(0) {
         "https://picsum.photos/seed/${it + 40}/300/300"
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        modifier = Modifier
-            .fillMaxWidth(),
-        contentPadding = PaddingValues(1.dp),
-        horizontalArrangement = Arrangement.spacedBy(1.dp),
-        verticalArrangement = Arrangement.spacedBy(1.dp)
-    ) {
-        items(dummyImages.size) {
-            AsyncImage(
-                model = dummyImages[it],
-                contentDescription = null,
-                modifier = Modifier.aspectRatio(1f),
-                contentScale = ContentScale.Crop
-            )
+    if (dummyImages.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No posts yet", color = Color.Gray)
+        }
+    } else {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(1.dp),
+            horizontalArrangement = Arrangement.spacedBy(1.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp)
+        ) {
+            items(dummyImages.size) {
+                AsyncImage(
+                    model = dummyImages[it],
+                    contentDescription = null,
+                    modifier = Modifier.aspectRatio(1f),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
     }
 }
