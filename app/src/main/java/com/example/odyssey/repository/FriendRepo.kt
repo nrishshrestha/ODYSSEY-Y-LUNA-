@@ -47,4 +47,7 @@ interface FriendRepo {
         userId: String,
         callback: (Boolean, String, List<UserModel?>) -> Unit
     )
+
+    fun getFollowersCount(userId: String, callback: (Int) -> Unit)
+    fun getFollowingCount(userId: String, callback: (Int) -> Unit)
 }

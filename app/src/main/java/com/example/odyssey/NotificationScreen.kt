@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -73,11 +74,34 @@ fun NotificationScreen(
     if (showTopBar) {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(title = { Text("Notifications", fontWeight = FontWeight.Bold) })
+                CenterAlignedTopAppBar(
+                    title = { Text("Notifications", fontWeight = FontWeight.Bold) },
+                    actions = {
+                        if (notifications.any { !it.isRead }) {
+                            IconButton(onClick = {
+                                notificationViewModel.markAllAsRead(currentUserId)
+                            }) {
+                                Icon(Icons.Default.DoneAll, contentDescription = "Mark all as read")
+                            }
+                        }
+                    }
+                )
             }
         ) { padding -> content(padding) }
     } else {
-        content(PaddingValues(0.dp))
+        Column {
+            if (notifications.any { !it.isRead }) {
+                TextButton(
+                    onClick = { notificationViewModel.markAllAsRead(currentUserId) },
+                    modifier = Modifier.align(Alignment.End).padding(end = 16.dp)
+                ) {
+                    Icon(Icons.Default.DoneAll, null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Mark all as read", fontSize = 12.sp)
+                }
+            }
+            content(PaddingValues(0.dp))
+        }
     }
 }
 
@@ -90,6 +114,7 @@ fun NotificationCard(
     var senderData by remember { mutableStateOf<UserModel?>(null) }
     val context = LocalContext.current
     val requestId = notification.metadata["requestId"]
+    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
     LaunchedEffect(notification.fromUserId) {
         UserRepoImpl().getUserByID(notification.fromUserId) { success, _, user ->
@@ -155,8 +180,17 @@ fun NotificationCard(
                     OutlinedButton(
                         onClick = {
                             userViewModel.declineRequest(requestId) { success, msg ->
+                                if (success) {
+                                    notificationViewModel.updateNotification(
+                                        notification.id,
+                                        mapOf(
+                                            "content" to "Follow request declined",
+                                            "type" to "FOLLOW_DECLINED",
+                                            "isRead" to true
+                                        )
+                                    )
+                                }
                                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                notificationViewModel.markNotificationAsRead(notification.id)
                             }
                         },
                         modifier = Modifier.height(32.dp),
@@ -171,8 +205,29 @@ fun NotificationCard(
                     Button(
                         onClick = {
                             userViewModel.acceptRequest(requestId) { success, msg ->
+                                if (success) {
+                                    // Update current notification
+                                    notificationViewModel.updateNotification(
+                                        notification.id,
+                                        mapOf(
+                                            "content" to "Follow request accepted",
+                                            "type" to "FOLLOW_ACCEPTED",
+                                            "isRead" to true
+                                        )
+                                    )
+                                    
+                                    // Send notification to the sender
+                                    val replyNotification = NotificationModel(
+                                        fromUserId = currentUserId,
+                                        toUserId = notification.fromUserId,
+                                        type = "FOLLOW_ACCEPTED_REPLY",
+                                        content = "accepted your follow request",
+                                        timestamp = System.currentTimeMillis(),
+                                        isRead = false
+                                    )
+                                    notificationViewModel.sendNotification(replyNotification)
+                                }
                                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                notificationViewModel.markNotificationAsRead(notification.id)
                             }
                         },
                         modifier = Modifier.height(32.dp),
