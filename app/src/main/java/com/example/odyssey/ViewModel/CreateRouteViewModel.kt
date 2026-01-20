@@ -17,7 +17,7 @@ import java.util.UUID
 
 class CreateRouteViewModel : ViewModel() {
 
-    // Observable state
+    // Obserable state
     var routePoints = mutableStateListOf<RoutePointModel>()
         private set
 
