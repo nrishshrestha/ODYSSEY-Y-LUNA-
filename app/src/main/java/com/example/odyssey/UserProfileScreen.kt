@@ -1,9 +1,9 @@
 package com.example.odyssey
 
-import android.app.Activity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -55,6 +55,7 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
     val context = LocalContext.current
     val currentUser = FirebaseAuth.getInstance().currentUser
     val currentUserId = currentUser?.uid ?: ""
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
     
     // Determine if we are looking at our own profile or someone else's
     val isOwnProfile = targetUserId == null || targetUserId == currentUserId
@@ -111,7 +112,7 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
                 isFollowing = isFollowing,
                 onEditClick = { showEditDialog = true },
                 onFollowClick = {
-                    userViewModel.followUser(currentUserId, effectiveUserId) { success, message ->
+                    userViewModel.followUser(currentUserId, effectiveUserId) { _, message ->
                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -133,9 +134,7 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
                     },
                     navigationIcon = {
                         IconButton(onClick = {
-                            if (context is Activity) {
-                                context.onBackPressedDispatcher.onBackPressed()
-                            }
+                            backDispatcher?.onBackPressed()
                         }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                         }
