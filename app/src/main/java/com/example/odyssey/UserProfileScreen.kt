@@ -51,7 +51,11 @@ class UserProfileScreen : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
+fun UserProfileBody(
+    targetUserId: String? = null,
+    showTopBar: Boolean = true,
+    onMessageClick: (String, String) -> Unit = { _, _ -> }
+) {
     val context = LocalContext.current
     val currentUser = FirebaseAuth.getInstance().currentUser
     val currentUserId = currentUser?.uid ?: ""
@@ -115,6 +119,9 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
                     userViewModel.followUser(currentUserId, effectiveUserId) { _, message ->
                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     }
+                },
+                onMessageClick = {
+                    onMessageClick(effectiveUserId, name)
                 }
             )
 
@@ -224,7 +231,8 @@ fun ProfileActions(
     isOwnProfile: Boolean,
     isFollowing: Boolean,
     onEditClick: () -> Unit,
-    onFollowClick: () -> Unit
+    onFollowClick: () -> Unit,
+    onMessageClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -270,7 +278,7 @@ fun ProfileActions(
             }
 
             Button(
-                onClick = {},
+                onClick = onMessageClick,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
