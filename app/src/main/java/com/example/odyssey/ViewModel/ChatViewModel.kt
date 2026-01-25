@@ -1,6 +1,7 @@
 package com.example.odyssey.ViewModel
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -12,24 +13,40 @@ class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
     private val _messages = MutableLiveData<List<ChatMessage>>(emptyList())
     val messages: LiveData<List<ChatMessage>> = _messages
 
-    fun login(userId: String, userName: String) {
-        repository.login(userId, userName) { success, _ ->
+    fun initChat(currentUserId: String, currentUserName: String, toUserId: String) {
+        Log.d("ChatViewModel", "Initializing chat: $currentUserId -> $toUserId")
+        
+        // Setup listener first to ensure we don't miss anything while logging in
+        repository.receiveMessages { newMessages ->
+            Log.d("ChatViewModel", "Received ${newMessages.size} real-time messages")
+            val current = _messages.value ?: emptyList()
+            
+            // Filter: Only show messages relevant to this conversation
+            val filteredNew = newMessages.filter { nm -> 
+                current.none { c -> c.messageId == nm.messageId } && 
+                (nm.senderId == toUserId || nm.senderId == currentUserId)
+            }
+            
+            if (filteredNew.isNotEmpty()) {
+                _messages.postValue(current + filteredNew)
+            }
+        }
+
+        repository.login(currentUserId, currentUserName) { success, _ ->
             if (success) {
-                repository.receiveMessages { newMessages ->
-                    val current = _messages.value ?: emptyList()
-                    // Filter out duplicates if any
-                    val filteredNew = newMessages.filter { nm -> current.none { c -> c.messageId == nm.messageId } }
-                    if (filteredNew.isNotEmpty()) {
-                        _messages.postValue(current + filteredNew)
-                    }
-                }
+                Log.d("ChatViewModel", "Login successful, fetching history...")
+                loadHistory(toUserId)
+            } else {
+                Log.e("ChatViewModel", "Login failed")
             }
         }
     }
 
-    fun loadHistory(userId: String) {
+    private fun loadHistory(userId: String) {
         repository.queryHistory(userId) { history ->
-            _messages.postValue(history.reversed()) // Usually history comes in reverse order
+            Log.d("ChatViewModel", "Loaded ${history.size} history messages")
+            // ZIM history is usually newest-first, we want oldest-first for the LazyColumn
+            _messages.postValue(history.reversed())
         }
     }
 
@@ -37,10 +54,11 @@ class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
         repository.sendMessage(toUserId, text) { success, _ ->
             if (success) {
                 val newMessage = ChatMessage(
-                    senderId = "me", 
+                    senderId = "me", // Marker for local UI
                     message = text,
                     timestamp = System.currentTimeMillis(),
-                    type = ChatMessageType.TEXT
+                    type = ChatMessageType.TEXT,
+                    messageId = "local_${System.currentTimeMillis()}"
                 )
                 addLocalMessage(newMessage)
             }
@@ -55,7 +73,8 @@ class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
                     message = "[Media]",
                     timestamp = System.currentTimeMillis(),
                     type = type,
-                    mediaUrl = uri.toString()
+                    mediaUrl = uri.toString(),
+                    messageId = "local_media_${System.currentTimeMillis()}"
                 )
                 addLocalMessage(newMessage)
             }
@@ -69,6 +88,7 @@ class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        repository.logout()
+        // Optional: logout if you want to close connection when VM dies
+        // repository.logout()
     }
 }
