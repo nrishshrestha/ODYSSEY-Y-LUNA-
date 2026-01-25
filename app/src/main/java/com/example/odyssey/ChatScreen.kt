@@ -11,10 +11,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.*
@@ -43,15 +44,14 @@ fun ChatScreen(
     chatViewModel: ChatViewModel
 ) {
     val messages by chatViewModel.messages.observeAsState(emptyList())
-    var textState by remember { mutableStateOf("") }
+    var textState by remember(toUserId) { mutableStateOf("") }
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
     val currentUserName = FirebaseAuth.getInstance().currentUser?.email ?: "User"
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(toUserId) {
-        chatViewModel.login(currentUserId, currentUserName)
-        chatViewModel.loadHistory(toUserId)
+        chatViewModel.initChat(currentUserId, currentUserName, toUserId)
     }
 
     LaunchedEffect(messages.size) {
@@ -97,7 +97,7 @@ fun ChatScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
                 actions = {
-                    IconButton(onClick = {}) { Icon(Icons.Default.Videocam, null, tint = Color(0xFF3460FB)) }
+                    IconButton(onClick = {}) { Icon(Icons.Default.Info, null, tint = Color(0xFF3460FB)) }
                 }
             )
         },
@@ -205,42 +205,58 @@ fun ChatInput(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(horizontal = 4.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {}) { Icon(Icons.Default.AddCircle, null, tint = Color(0xFF0084FF)) }
-            IconButton(onClick = onImagePick) { Icon(Icons.Default.Image, null, tint = Color(0xFF0084FF)) }
-            
+            // Video icon shifted to the left
+            IconButton(onClick = onVideoPick) {
+                Icon(Icons.Default.Videocam, null, tint = Color(0xFF0084FF), modifier = Modifier.size(24.dp))
+            }
+
+            // Image icon
+            IconButton(onClick = onImagePick) {
+                Icon(Icons.Default.Image, null, tint = Color(0xFF0084FF), modifier = Modifier.size(24.dp))
+            }
+
+            // Compact message field using BasicTextField to save space
             Surface(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 4.dp),
                 shape = RoundedCornerShape(20.dp),
                 color = Color(0xFFF0F2F5)
             ) {
-                TextField(
-                    value = text,
-                    onValueChange = onTextChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Aa", color = Color.Gray) },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    maxLines = 4
-                )
+                Box(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    BasicTextField(
+                        value = text,
+                        onValueChange = onTextChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 15.sp, color = Color.Black),
+                        maxLines = 4,
+                        decorationBox = { innerTextField ->
+                            if (text.isEmpty()) {
+                                Text("Aa", color = Color.Gray, fontSize = 15.sp)
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
             }
-            
-            if (text.isNotBlank()) {
-                IconButton(onClick = onSend) {
-                    Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color(0xFF0084FF))
-                }
-            } else {
-                IconButton(onClick = onVideoPick) {
-                    Icon(Icons.Default.Videocam, null, tint = Color(0xFF0084FF))
-                }
+
+            // Send button always visible on the right
+            IconButton(
+                onClick = onSend,
+                enabled = text.isNotBlank()
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Send,
+                    null,
+                    tint = if (text.isNotBlank()) Color(0xFF0084FF) else Color.Gray,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }
