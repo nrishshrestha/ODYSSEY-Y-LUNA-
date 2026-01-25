@@ -62,6 +62,34 @@ fun CreateScreen(
             modifier = Modifier.fillMaxSize()
         )
 
+        // === TIMER DISPLAY AT TOP ===
+        if (viewModel.isRecording.value) {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Recording",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = viewModel.timerDisplay.value,
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+        }
+
         // Recording controls (bottom)
         Column(
             modifier = Modifier
@@ -123,6 +151,13 @@ fun CreateScreen(
                     } else {
                         locationPermissions.launchMultiplePermissionRequest()
                     }
+                },
+                colors = if (viewModel.isRecording.value) {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                } else {
+                    ButtonDefaults.buttonColors()
                 }
             ) {
                 Text(
@@ -182,6 +217,11 @@ fun CreateScreen(
             title = { Text("Save Route") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Duration: ${viewModel.timerDisplay.value}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                     OutlinedTextField(
                         value = viewModel.routeTitle.value,
                         onValueChange = { viewModel.updateRouteTitle(it) },
