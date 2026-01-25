@@ -209,15 +209,15 @@ fun ChatInput(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Video icon shifted to the left
-            IconButton(onClick = onVideoPick) { 
-                Icon(Icons.Default.Videocam, null, tint = Color(0xFF0084FF), modifier = Modifier.size(24.dp)) 
+            IconButton(onClick = onVideoPick) {
+                Icon(Icons.Default.Videocam, null, tint = Color(0xFF0084FF), modifier = Modifier.size(24.dp))
             }
-            
+
             // Image icon
-            IconButton(onClick = onImagePick) { 
-                Icon(Icons.Default.Image, null, tint = Color(0xFF0084FF), modifier = Modifier.size(24.dp)) 
+            IconButton(onClick = onImagePick) {
+                Icon(Icons.Default.Image, null, tint = Color(0xFF0084FF), modifier = Modifier.size(24.dp))
             }
-            
+
             // Compact message field using BasicTextField to save space
             Surface(
                 modifier = Modifier
@@ -245,15 +245,15 @@ fun ChatInput(
                     )
                 }
             }
-            
+
             // Send button always visible on the right
             IconButton(
                 onClick = onSend,
                 enabled = text.isNotBlank()
             ) {
                 Icon(
-                    Icons.AutoMirrored.Filled.Send, 
-                    null, 
+                    Icons.AutoMirrored.Filled.Send,
+                    null,
                     tint = if (text.isNotBlank()) Color(0xFF0084FF) else Color.Gray,
                     modifier = Modifier.size(24.dp)
                 )

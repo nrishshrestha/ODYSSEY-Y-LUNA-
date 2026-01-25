@@ -8,25 +8,26 @@ import androidx.lifecycle.ViewModel
 import com.example.odyssey.model.ChatMessage
 import com.example.odyssey.model.ChatMessageType
 import com.example.odyssey.repository.ChatRepo
+import timber.log.Timber
 
 class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
     private val _messages = MutableLiveData<List<ChatMessage>>(emptyList())
     val messages: LiveData<List<ChatMessage>> = _messages
 
     fun initChat(currentUserId: String, currentUserName: String, toUserId: String) {
-        Log.d("ChatViewModel", "Initializing chat: $currentUserId -> $toUserId")
-        
+        Timber.tag("ChatViewModel").d("Initializing chat: $currentUserId -> $toUserId")
+
         // Setup listener first to ensure we don't miss anything while logging in
         repository.receiveMessages { newMessages ->
             Log.d("ChatViewModel", "Received ${newMessages.size} real-time messages")
             val current = _messages.value ?: emptyList()
-            
+
             // Filter: Only show messages relevant to this conversation
-            val filteredNew = newMessages.filter { nm -> 
-                current.none { c -> c.messageId == nm.messageId } && 
-                (nm.senderId == toUserId || nm.senderId == currentUserId)
+            val filteredNew = newMessages.filter { nm ->
+                current.none { c -> c.messageId == nm.messageId } &&
+                        (nm.senderId == toUserId || nm.senderId == currentUserId)
             }
-            
+
             if (filteredNew.isNotEmpty()) {
                 _messages.postValue(current + filteredNew)
             }
@@ -34,17 +35,17 @@ class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
 
         repository.login(currentUserId, currentUserName) { success, _ ->
             if (success) {
-                Log.d("ChatViewModel", "Login successful, fetching history...")
+                Timber.tag("ChatViewModel").d("Login successful, fetching history...")
                 loadHistory(toUserId)
             } else {
-                Log.e("ChatViewModel", "Login failed")
+                Timber.tag("ChatViewModel").e("Login failed")
             }
         }
     }
 
     private fun loadHistory(userId: String) {
         repository.queryHistory(userId) { history ->
-            Log.d("ChatViewModel", "Loaded ${history.size} history messages")
+            Timber.tag("ChatViewModel").d("Loaded ${history.size} history messages")
             // ZIM history is usually newest-first, we want oldest-first for the LazyColumn
             _messages.postValue(history.reversed())
         }
