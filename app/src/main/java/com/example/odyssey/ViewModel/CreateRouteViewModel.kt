@@ -17,8 +17,15 @@ import java.util.UUID
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 
 class CreateRouteViewModel : ViewModel() {
+    private val _userRoutes = MutableLiveData<List<RouteModel>>(emptyList())
+    val userRoutes: LiveData<List<RouteModel>> get() = _userRoutes
 
     // Obserable state
     var routePoints = mutableStateListOf<RoutePointModel>()
@@ -402,5 +409,85 @@ class CreateRouteViewModel : ViewModel() {
         stopTimer()
         stopRecording()
         fusedLocationClient = null
+    }
+
+    /**
+     * Fetch routes for a specific userId from Realtime Database.
+     * This queries /routes where child("userId") == userId.
+     */
+    fun getRoutesByUser(userId: String) {
+        if (userId.isEmpty()) {
+            _userRoutes.postValue(emptyList())
+            return
+        }
+
+        val ref = FirebaseDatabase.getInstance().reference.child("routes")
+        // orderByChild + equalTo to fetch only this user's routes
+        ref.orderByChild("userId").equalTo(userId)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val list = mutableListOf<RouteModel>()
+                    for (child in snapshot.children) {
+                        try {
+                            val map = child.value as? Map<String, Any?>
+                            if (map != null) {
+                                // read fields safely
+                                val routeId = map["routeId"] as? String ?: child.key ?: ""
+                                val title = map["title"] as? String ?: ""
+                                val description = map["description"] as? String ?: ""
+                                val userIdField = map["userId"] as? String ?: ""
+                                val createdAt = (map["createdAt"] as? Number)?.toLong() ?: 0L
+                                val isLive = map["isLive"] as? Boolean ?: false
+                                val totalDistance = (map["totalDistance"] as? Number)?.toDouble() ?: 0.0
+                                val duration = (map["duration"] as? Number)?.toLong() ?: 0L
+
+                                // points are stored as map-of-maps; we don't need all point details here.
+                                // create RouteModel with empty points (UI shows summary info)
+                                val routeModel = RouteModel(
+                                    routeId = routeId,
+                                    userId = userIdField,
+                                    title = title,
+                                    description = description,
+                                    createdAt = createdAt,
+                                    points = emptyList(),
+                                    isLive = isLive,
+                                    totalDistance = totalDistance,
+                                    duration = duration
+                                )
+                                list.add(routeModel)
+                            }
+                        } catch (e: Exception) {
+                            // ignore one malformed child but continue
+                        }
+                    }
+                    // sort by createdAt desc
+                    list.sortByDescending { it.createdAt }
+                    _userRoutes.postValue(list)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    // on error, post empty or keep existing
+                    _userRoutes.postValue(emptyList())
+                }
+            })
+    }
+
+    /**
+     * Delete route by routeId.
+     * Calls callback(success, message).
+     */
+    fun deleteRoute(routeId: String, callback: (Boolean, String) -> Unit) {
+        if (routeId.isEmpty()) {
+            callback(false, "Invalid routeId")
+            return
+        }
+        val ref = FirebaseDatabase.getInstance().reference.child("routes").child(routeId)
+        ref.removeValue()
+            .addOnSuccessListener {
+                callback(true, "Route deleted")
+            }
+            .addOnFailureListener { ex ->
+                callback(false, ex.localizedMessage ?: "Failed to delete route")
+            }
     }
 }
