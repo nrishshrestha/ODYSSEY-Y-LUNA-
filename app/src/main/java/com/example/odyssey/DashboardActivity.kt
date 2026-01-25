@@ -297,7 +297,14 @@ fun Header(
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Logout") },
+                        text = { Text("Logout",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 10.dp),
+                            fontSize = 16.sp,
+                            color = Color(0xFFB21F1F)
+                        )
+                            },
                         onClick = {
                             showMenu = false
                             onMoreClick()
