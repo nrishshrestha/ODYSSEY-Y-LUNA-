@@ -5,6 +5,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -14,7 +15,7 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.annotations.IconFactory
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import android.graphics.Color
 import com.example.odyssey.utils.drawRoute
 
 @Composable
@@ -29,7 +30,6 @@ fun BaatoMap(
     val mapView = remember {
         MapView(context)
     }
-    var userMarker: org.maplibre.android.annotations.Marker? = null
 
     AndroidView(
         modifier = modifier,
@@ -37,46 +37,34 @@ fun BaatoMap(
             mapView.apply {
                 onCreate(null)
                 getMapAsync { map ->
-                    // 1. Determine the center point for the camera
+                    // Default camera position (Kathmandu, Nepal)
                     val defaultLocation = LatLng(27.7172, 85.3240)
-                    val targetLocation = currentLocation ?: defaultLocation
+                    val initialLocation = currentLocation ?: defaultLocation
 
-                    // 2. Set the initial camera position immediately
                     map.cameraPosition = CameraPosition.Builder()
-                        .target(targetLocation)
+                        .target(initialLocation)
                         .zoom(15.0)
                         .build()
 
-                    // 3. Load Style - REPLACE WITH YOUR ACTUAL BAATO API KEY
-                    // Get your key from https://baato.io/
-                    val baatoApiKey = "bpk.GUTSn6p8o-LVyDlQOu-S7HLs2gQgI5Y6zkvoAGVlDXMD"
-                    val baatoStyleUrl = "https://api.baato.io/api/v1/styles/breeze?key=$baatoApiKey"
+                    // Load Baato style
+                    val baatoStyleUrl = "https://api.baato.io/api/v1/styles/breeze?key=bpk.GUTSn6p8o-LVyDlQOu-S7HLs2gQgI5Y6zkvoAGVlDXMD"
 
                     map.setStyle(Style.Builder().fromUri(baatoStyleUrl)) { style ->
-                        android.util.Log.d("BaatoMap", "Map style loaded successfully")
+                        android.util.Log.d("BaatoMap", "Style loaded successfully")
 
                         // Add current location marker if available
                         currentLocation?.let { location ->
-                            try {
-                                val iconFactory = IconFactory.getInstance(context)
-                                val icon = iconFactory.defaultMarker()
-
-                                userMarker = map.addMarker(
-                                    MarkerOptions()
-                                        .position(location)
-                                        .title("You are here")
-                                )
-                                userMarker?.icon = icon
-                                android.util.Log.d("BaatoMap", "Current location marker added")
-                            } catch (e: Exception) {
-                                android.util.Log.e("BaatoMap", "Error adding marker: ${e.message}")
-                            }
+                            map.addMarker(
+                                MarkerOptions()
+                                    .position(location)
+                                    .title("You are here")
+                            )
+                            android.util.Log.d("BaatoMap", "Current location marker added")
                         }
 
                         // Draw route if exists
                         if (routePoints.isNotEmpty()) {
                             drawRoute(map, routePoints)
-                            android.util.Log.d("BaatoMap", "Route drawn with ${routePoints.size} points")
                         }
                     }
                 }
@@ -85,29 +73,18 @@ fun BaatoMap(
         update = { view ->
             view.getMapAsync { map ->
                 if (map.style?.isFullyLoaded == true) {
-                    android.util.Log.d("BaatoMap", "Map update triggered")
+                    // Clear and redraw markers
+                    map.clear()
 
-                    // Update current location marker
+                    // Add current location marker
                     currentLocation?.let { location ->
-                        if (userMarker != null) {
-                            userMarker?.position = location
-                        } else {
-                            try {
-                                val iconFactory = IconFactory.getInstance(context)
-                                val icon = iconFactory.defaultMarker()
+                        map.addMarker(
+                            MarkerOptions()
+                                .position(location)
+                                .title("You are here")
+                        )
 
-                                userMarker = map.addMarker(
-                                    MarkerOptions()
-                                        .position(location)
-                                        .title("You are here")
-                                )
-                                userMarker?.icon = icon
-                            } catch (e: Exception) {
-                                android.util.Log.e("BaatoMap", "Error updating marker: ${e.message}")
-                            }
-                        }
-
-                        // Move camera to current location smoothly
+                        // Move camera to current location
                         map.animateCamera(
                             org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
                                 location,
@@ -117,7 +94,7 @@ fun BaatoMap(
                         )
                     }
 
-                    // Update route
+                    // Draw route
                     if (routePoints.isNotEmpty()) {
                         drawRoute(map, routePoints)
                     }

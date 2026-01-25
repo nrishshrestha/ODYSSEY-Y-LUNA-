@@ -11,18 +11,10 @@ fun drawRoute(
 ) {
     if (points.size < 2) return
 
-    // Remove previous polylines only (don't clear the whole map — that removes markers)
-    try {
-        val existingPolylines = ArrayList(map.polylines)
-        for (poly in existingPolylines) {
-            map.removePolyline(poly)
-        }
-    } catch (e: Exception) {
-        // If anything goes wrong, fall back to a safe approach — don't crash the app.
-        android.util.Log.w("MapUtils", "Couldn't remove existing polylines: ${e.message}")
-    }
+    // Clear previous annotations
+    map.clear()
 
-    // Draw the new polyline
+    // Draw polyline
     map.addPolyline(
         PolylineOptions()
             .addAll(points)
