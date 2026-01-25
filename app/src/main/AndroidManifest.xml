@@ -21,6 +21,17 @@
         android:theme="@style/Theme.ODYSSEY"
         tools:replace="android:fullBackupContent">
         <activity
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:label="@string/title_activity_splash"
+            android:theme="@style/Theme.ODYSSEY">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".UserProfileScreen"
             android:exported="true"
             android:label="@string/title_activity_user_profile_screen"
