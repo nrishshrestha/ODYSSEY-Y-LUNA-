@@ -1,5 +1,6 @@
 package com.example.odyssey
 
+import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,12 +33,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.odyssey.ViewModel.ChatViewModel
 import com.example.odyssey.ViewModel.NotificationViewModel
 import com.example.odyssey.ViewModel.UserViewModel
+import com.example.odyssey.repository.ChatRepoImpl
 import com.example.odyssey.repository.FriendRepoImpl
 import com.example.odyssey.repository.UserRepoImpl
 import com.example.odyssey.ui.theme.ODYSSEYTheme
@@ -64,15 +69,27 @@ class DashboardActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardBody() {
-
+    val context = LocalContext.current
     data class NavItem(val label: String, val icon: Int)
 
     var selectedItem by remember { mutableIntStateOf(0) }
     var showNotifications by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
+    var selectedUserId by remember { mutableStateOf<String?>(null) }
+    var selectedChatUserId by remember { mutableStateOf<String?>(null) }
+    var selectedChatUserName by remember { mutableStateOf("") }
 
     val userViewModel = remember { UserViewModel(UserRepoImpl(), FriendRepoImpl(UserRepoImpl())) }
     val notificationViewModel = remember { NotificationViewModel() }
+    
+    val chatViewModel: ChatViewModel = viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                return ChatViewModel(ChatRepoImpl(context.applicationContext as Application)) as T
+            }
+        }
+    )
     
     val unreadCount by notificationViewModel.unreadCount.observeAsState(0)
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
@@ -95,9 +112,11 @@ fun DashboardBody() {
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    if (selectedItem != 0 || showNotifications || showSearch) {
+                    if (selectedItem != 0 || showNotifications || showSearch || selectedChatUserId != null || selectedUserId != null) {
                         IconButton(onClick = { 
-                            if (showNotifications) showNotifications = false 
+                            if (selectedChatUserId != null) selectedChatUserId = null
+                            else if (selectedUserId != null) selectedUserId = null
+                            else if (showNotifications) showNotifications = false 
                             else if (showSearch) showSearch = false
                             else selectedItem = 0 
                         }) {
@@ -113,10 +132,14 @@ fun DashboardBody() {
                         onNotificationClick = { 
                             showNotifications = true
                             showSearch = false
+                            selectedChatUserId = null
+                            selectedUserId = null
                         },
                         onSearchClick = {
                             showSearch = true
                             showNotifications = false
+                            selectedChatUserId = null
+                            selectedUserId = null
                         },
                         unreadCount = unreadCount
                     ) 
@@ -138,8 +161,10 @@ fun DashboardBody() {
                             selectedItem = index
                             showNotifications = false
                             showSearch = false
+                            selectedChatUserId = null
+                            selectedUserId = null
                         },
-                        selected = !showNotifications && !showSearch && selectedItem == index
+                        selected = !showNotifications && !showSearch && selectedChatUserId == null && selectedUserId == null && selectedItem == index
                     )
                 }
             }
@@ -157,14 +182,43 @@ fun DashboardBody() {
                     userViewModel = userViewModel
                 )
             } else if (showSearch) {
-                SearchScreen(showTopBar = false)
+                SearchScreen(
+                    showTopBar = false,
+                    onUserClick = { userId ->
+                        selectedUserId = userId
+                        showSearch = false
+                    }
+                )
+            } else if (selectedChatUserId != null) {
+                ChatScreen(
+                    toUserId = selectedChatUserId!!,
+                    toUserName = selectedChatUserName,
+                    chatViewModel = chatViewModel
+                )
+            } else if (selectedUserId != null) {
+                UserProfileBody(
+                    targetUserId = selectedUserId,
+                    showTopBar = false,
+                    onMessageClick = { userId, userName ->
+                        selectedChatUserId = userId
+                        selectedChatUserName = userName
+                    }
+                )
             } else {
                 when (selectedItem) {
                     0 -> HomeScreen()
                     1 -> Text(text = "Trips")
                     2 -> CreateScreen()
-                    3 -> FriendsScreen()
-                    4 -> UserProfileBody(showTopBar = false)
+                    3 -> FriendsScreen(onUserClick = { userId ->
+                        selectedUserId = userId
+                    })
+                    4 -> UserProfileBody(
+                        showTopBar = false,
+                        onMessageClick = { userId, userName ->
+                            selectedChatUserId = userId
+                            selectedChatUserName = userName
+                        }
+                    )
                 }
             }
         }

@@ -18,4 +18,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "ODYSSEY"
 include(":app")
- 

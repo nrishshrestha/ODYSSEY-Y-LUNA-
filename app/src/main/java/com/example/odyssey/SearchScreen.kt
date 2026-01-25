@@ -43,7 +43,10 @@ class SearchActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(showTopBar: Boolean = true) {
+fun SearchScreen(
+    showTopBar: Boolean = true,
+    onUserClick: ((String) -> Unit)? = null
+) {
     val context = LocalContext.current
     val userViewModel = remember { UserViewModel(UserRepoImpl()) }
     var searchQuery by remember { mutableStateOf("") }
@@ -103,9 +106,13 @@ fun SearchScreen(showTopBar: Boolean = true) {
                 ) {
                     items(filteredUsers) { user ->
                         UserSearchItem(user) {
-                            val intent = Intent(context, UserProfileScreen::class.java)
-                            intent.putExtra("userId", user.userId)
-                            context.startActivity(intent)
+                            if (onUserClick != null) {
+                                onUserClick(user.userId)
+                            } else {
+                                val intent = Intent(context, UserProfileScreen::class.java)
+                                intent.putExtra("userId", user.userId)
+                                context.startActivity(intent)
+                            }
                         }
                     }
                 }
