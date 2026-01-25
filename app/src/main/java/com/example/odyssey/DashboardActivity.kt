@@ -1,7 +1,9 @@
 package com.example.odyssey
 
 import android.app.Application
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -14,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -81,7 +85,7 @@ fun DashboardBody() {
 
     val userViewModel = remember { UserViewModel(UserRepoImpl(), FriendRepoImpl(UserRepoImpl())) }
     val notificationViewModel = remember { NotificationViewModel() }
-    
+
     val chatViewModel: ChatViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -90,7 +94,7 @@ fun DashboardBody() {
             }
         }
     )
-    
+
     val unreadCount by notificationViewModel.unreadCount.observeAsState(0)
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
@@ -113,12 +117,12 @@ fun DashboardBody() {
             TopAppBar(
                 navigationIcon = {
                     if (selectedItem != 0 || showNotifications || showSearch || selectedChatUserId != null || selectedUserId != null) {
-                        IconButton(onClick = { 
+                        IconButton(onClick = {
                             if (selectedChatUserId != null) selectedChatUserId = null
                             else if (selectedUserId != null) selectedUserId = null
-                            else if (showNotifications) showNotifications = false 
+                            else if (showNotifications) showNotifications = false
                             else if (showSearch) showSearch = false
-                            else selectedItem = 0 
+                            else selectedItem = 0
                         }) {
                             Icon(
                                 painter = painterResource(R.drawable.baseline_arrow_back_ios_new_24),
@@ -127,9 +131,9 @@ fun DashboardBody() {
                         }
                     }
                 },
-                title = { 
+                title = {
                     Header(
-                        onNotificationClick = { 
+                        onNotificationClick = {
                             showNotifications = true
                             showSearch = false
                             selectedChatUserId = null
@@ -141,8 +145,16 @@ fun DashboardBody() {
                             selectedChatUserId = null
                             selectedUserId = null
                         },
+                        onMoreClick = {
+                            // Logout functionality
+                            FirebaseAuth.getInstance().signOut()
+                            Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+                            val intent = Intent(context, LoginActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            context.startActivity(intent)
+                        },
                         unreadCount = unreadCount
-                    ) 
+                    )
                 }
             )
         },
@@ -227,7 +239,14 @@ fun DashboardBody() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Header(onNotificationClick: () -> Unit, onSearchClick: () -> Unit, unreadCount: Int) {
+fun Header(
+    onNotificationClick: () -> Unit,
+    onSearchClick: () -> Unit,
+    onMoreClick: () -> Unit,
+    unreadCount: Int
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -263,6 +282,26 @@ fun Header(onNotificationClick: () -> Unit, onSearchClick: () -> Unit, unreadCou
                     Icon(
                         painter = painterResource(id = R.drawable.baseline_notifications_24),
                         contentDescription = "Notifications"
+                    )
+                }
+            }
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.outline_more_vert_24),
+                        contentDescription = "More"
+                    )
+                }
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Logout") },
+                        onClick = {
+                            showMenu = false
+                            onMoreClick()
+                        }
                     )
                 }
             }
