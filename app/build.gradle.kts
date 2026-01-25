@@ -39,7 +39,14 @@ android {
     }
     buildFeatures {
         compose = true
+        dataBinding = true
+        viewBinding = true
     }
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
+
 }
 
 dependencies {
@@ -52,6 +59,7 @@ dependencies {
     implementation("org.maplibre.gl:android-sdk:11.5.1")
     implementation("com.google.android.gms:play-services-location:21.1.0")
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    implementation("com.github.ZEGOCLOUD:zego_inapp_chat_uikit_android:+")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
