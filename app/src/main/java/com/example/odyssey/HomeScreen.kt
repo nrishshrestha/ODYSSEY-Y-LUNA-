@@ -1,38 +1,121 @@
 package com.example.odyssey
 
-
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.*
+import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
 
 @Composable
 fun HomeScreen() {
-    LazyColumn(
+    val context = LocalContext.current
+
+    // Only fetch location once when the screen is created
+    var userLocation by remember { mutableStateOf<LatLng?>(null) }
+
+    val fusedClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
+
+    // Get location only once when the screen loads
+    LaunchedEffect(Unit) {
+        val permissionGranted =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        if (permissionGranted) {
+            fusedClient.lastLocation.addOnSuccessListener { location ->
+                location?.let {
+                    userLocation = LatLng(it.latitude, it.longitude)
+                }
+            }
+        }
+    }
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF5F6FA))
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { StatsCard() }
-        item { ActionButtons() }
-        item { TripsTitle() }
-        items(sampleTrips) { trip ->
-            TripCard(trip)
+        Text(
+            text = "Where you are",
+            fontWeight = FontWeight.Medium,
+            fontSize = 12.sp,
+            color = Color(0xD7363636)
+        )
+
+        AndroidView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(450.dp)
+                .clip(RoundedCornerShape(12.dp)),
+            factory = { ctx ->
+                MapView(ctx).also { mv ->
+                    mv.onCreate(null)
+                    mv.onStart()
+                    mv.onResume()
+                    mv.getMapAsync { map ->
+                        val styleUrl =
+                            "https://api.baato.io/api/v1/styles/breeze?key=bpk.GUTSn6p8o-LVyDlQOu-S7HLs2gQgI5Y6zkvoAGVlDXMD"
+
+                        map.setStyle(Style.Builder().fromUri(styleUrl)) {
+                            map.uiSettings.setAllGesturesEnabled(false)
+
+                            // Set marker and camera position only when location is available
+                            userLocation?.let { loc ->
+                                map.addMarker(
+                                    MarkerOptions()
+                                        .position(loc)
+                                        .title("You are here")
+                                )
+
+                                map.cameraPosition =
+                                    CameraPosition.Builder()
+                                        .target(loc)
+                                        .zoom(18.0)
+                                        .build()
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        StatsCard()
+        ActionButtons()
+        TripsTitle()
+
+        // SIMPLE COLUMN — NOT LAZY, NOT SCROLLABLE
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            sampleTrips.forEach { trip ->
+                TripCard(trip)
+            }
         }
     }
 }
@@ -67,7 +150,6 @@ fun StatItem(value: String, label: String) {
 @Composable
 fun ActionButtons() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -114,10 +196,9 @@ fun RowScope.OutlinedActionButton(text: String, icon: Int) {
             tint = Color.Black
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text, color = Color.Black)
+        Text(text, color = Color.Black, fontSize = 13.sp)
     }
 }
-
 
 @Composable
 fun TripsTitle() {
@@ -163,9 +244,3 @@ val sampleTrips = listOf(
     Trip("Everest Base Camp", "Jun 3 • 19 KM • 19 KM"),
     Trip("Annapurna Circuit", "May 21 • 14 KM • 30 KM")
 )
-
-@Preview
-@Composable
-fun HomeScreenPreview() {
-    HomeScreen()
-}
