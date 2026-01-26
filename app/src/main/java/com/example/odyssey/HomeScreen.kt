@@ -25,19 +25,25 @@ import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.runtime.DisposableEffect
 
 @Composable
 fun HomeScreen() {
     val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle // ADD THIS
 
-    // Only fetch location once when the screen is created
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
 
     val fusedClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
     }
 
-    // Get location only once when the screen loads
+    // ADD THIS: Remember the MapView instance
+    val mapView = remember { MapView(context) }
+
     LaunchedEffect(Unit) {
         val permissionGranted =
             ContextCompat.checkSelfPermission(
@@ -68,24 +74,22 @@ fun HomeScreen() {
             color = Color(0xD7363636)
         )
 
+        // FIXED AndroidView with proper lifecycle
         AndroidView(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(450.dp)
                 .clip(RoundedCornerShape(12.dp)),
-            factory = { ctx ->
-                MapView(ctx).also { mv ->
-                    mv.onCreate(null)
-                    mv.onStart()
-                    mv.onResume()
-                    mv.getMapAsync { map ->
+            factory = {
+                mapView.apply {
+                    onCreate(null)
+                    getMapAsync { map ->
                         val styleUrl =
                             "https://api.baato.io/api/v1/styles/breeze?key=bpk.GUTSn6p8o-LVyDlQOu-S7HLs2gQgI5Y6zkvoAGVlDXMD"
 
                         map.setStyle(Style.Builder().fromUri(styleUrl)) {
-                            map.uiSettings.setAllGesturesEnabled(false)
+                            // REMOVED: setAllGesturesEnabled(false) - this can cause crashes
 
-                            // Set marker and camera position only when location is available
                             userLocation?.let { loc ->
                                 map.addMarker(
                                     MarkerOptions()
@@ -102,14 +106,60 @@ fun HomeScreen() {
                         }
                     }
                 }
+            },
+            update = { view ->
+                // Update map when location changes
+                view.getMapAsync { map ->
+                    if (map.style?.isFullyLoaded == true) {
+                        userLocation?.let { loc ->
+                            // Clear existing markers
+                            map.clear()
+
+                            // Add updated marker
+                            map.addMarker(
+                                MarkerOptions()
+                                    .position(loc)
+                                    .title("You are here")
+                            )
+
+                            // Move camera smoothly
+                            map.animateCamera(
+                                org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
+                                    loc,
+                                    18.0
+                                ),
+                                1000
+                            )
+                        }
+                    }
+                }
             }
         )
+
+        // ADD THIS: Proper lifecycle handling
+        DisposableEffect(lifecycle) {
+            val observer = LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_START -> mapView.onStart()
+                    Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                    Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                    Lifecycle.Event.ON_STOP -> mapView.onStop()
+                    Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                    else -> {}
+                }
+            }
+            lifecycle.addObserver(observer)
+
+            onDispose {
+                lifecycle.removeObserver(observer)
+                mapView.onDestroy()
+            }
+        }
 
         StatsCard()
         ActionButtons()
         TripsTitle()
 
-        // SIMPLE COLUMN — NOT LAZY, NOT SCROLLABLE
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
