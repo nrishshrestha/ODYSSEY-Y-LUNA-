@@ -10,12 +10,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
@@ -33,10 +34,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.odyssey.ViewModel.UserViewModel
+import com.example.odyssey.ViewModel.CreateRouteViewModel
 import com.example.odyssey.model.UserModel
+import com.example.odyssey.model.RouteModel
 import com.example.odyssey.repository.FriendRepoImpl
 import com.example.odyssey.repository.UserRepoImpl
 import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.viewmodel.compose.viewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class UserProfileScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,6 +56,20 @@ class UserProfileScreen : ComponentActivity() {
     }
 }
 
+fun formatDuration(ms: Long): String {
+    val totalSeconds = ms / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+}
+
+fun formatDate(epochMs: Long): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+    return sdf.format(Date(epochMs))
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileBody(
@@ -60,17 +81,26 @@ fun UserProfileBody(
     val currentUser = FirebaseAuth.getInstance().currentUser
     val currentUserId = currentUser?.uid ?: ""
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-    
+
     // Determine if we are looking at our own profile or someone else's
     val isOwnProfile = targetUserId == null || targetUserId == currentUserId
     val effectiveUserId = targetUserId ?: currentUserId
 
     val userViewModel = remember { UserViewModel(UserRepoImpl(), FriendRepoImpl(UserRepoImpl())) }
-    
+
     val userData by if (isOwnProfile) userViewModel.user.observeAsState() else userViewModel.otherUser.observeAsState()
     val isFollowing by userViewModel.isFollowing.observeAsState(false)
     val followersCount by userViewModel.followersCount.observeAsState(0)
     val followingCount by userViewModel.followingCount.observeAsState(0)
+
+    val createRouteViewModel: CreateRouteViewModel = viewModel()
+    val userRoutes by createRouteViewModel.userRoutes.observeAsState(emptyList())
+
+    LaunchedEffect(effectiveUserId) {
+        if (effectiveUserId.isNotBlank()) {
+            createRouteViewModel.getRoutesByUser(effectiveUserId)
+        }
+    }
 
     var name by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
@@ -128,10 +158,13 @@ fun UserProfileBody(
             Spacer(modifier = Modifier.height(16.dp))
 
             TabSection()
-            PostGrid()
+            PostGrid(
+                routes = userRoutes,
+                effectiveUserId = effectiveUserId,
+                createRouteViewModel = createRouteViewModel
+            )
         }
     }
-
     if (showTopBar) {
         Scaffold(
             topBar = {
@@ -310,9 +343,9 @@ fun EditProfileDialog(
     ) { uri ->
         uri?.let {
             userViewModel.uploadImage(context, it)
-            // Note: The UI will update automatically via the getUserByID listener 
+            // Note: The UI will update automatically via the getUserByID listener
             // once Firebase updates, but we can set it locally for instant feedback if needed.
-            imageUrl = it.toString() 
+            imageUrl = it.toString()
         }
     }
 
@@ -352,7 +385,7 @@ fun EditProfileDialog(
                     label = { Text("First Name") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 OutlinedTextField(
                     value = lastName,
                     onValueChange = { lastName = it },
@@ -407,30 +440,60 @@ fun TabSection() {
 }
 
 @Composable
-fun PostGrid() {
-    val dummyImages = List(0) {
-        "https://picsum.photos/seed/${it + 40}/300/300"
-    }
+fun PostGrid(
+    routes: List<RouteModel>,
+    effectiveUserId: String,
+    createRouteViewModel: CreateRouteViewModel
+) {
+    // 1. Capture the context here, at the top level of the Composable
+    val context = LocalContext.current
 
-    if (dummyImages.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No posts yet", color = Color.Gray)
-        }
-    } else {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(1.dp),
-            horizontalArrangement = Arrangement.spacedBy(1.dp),
-            verticalArrangement = Arrangement.spacedBy(1.dp)
-        ) {
-            items(dummyImages.size) {
-                AsyncImage(
-                    model = dummyImages[it],
-                    contentDescription = null,
-                    modifier = Modifier.aspectRatio(1f),
-                    contentScale = ContentScale.Crop
-                )
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(text = "Trips", modifier = Modifier.padding(horizontal = 16.dp))
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+    ) {
+        items(routes.size) { index ->
+            val route = routes[index]
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp)
+            ) {
+                Row {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(16.dp)
+                    ) {
+                        Text(route.title.ifEmpty { "Untitled route" })
+                        Text("Duration: ${formatDuration(route.duration)}")
+                        Text("Distance: ${"%.2f".format(route.totalDistance)} m")
+                        Text("Date: ${formatDate(route.createdAt)}")
+                    }
+
+                    Column(
+                        modifier = Modifier.padding(8.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        IconButton(onClick = {
+                            createRouteViewModel.deleteRoute(route.routeId) { success, message ->
+                                // 2. Use the captured 'context' variable here
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                if (success) {
+                                    createRouteViewModel.getRoutesByUser(effectiveUserId)
+                                }
+                            }
+                        }) {
+                            Icon(Icons.Default.Delete, null, tint = Color.Red)
+                        }
+                    }
+                }
             }
         }
     }
