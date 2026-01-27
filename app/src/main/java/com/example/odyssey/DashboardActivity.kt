@@ -46,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -126,16 +127,18 @@ fun DashboardBody() {
             TopAppBar(
                 navigationIcon = {
                     if (selectedItem != 0 || showNotifications || showSearch || selectedChatUserId != null || selectedUserId != null) {
-                        IconButton(onClick = {
+                        IconButton( modifier = Modifier.testTag("moreMenu"),
+                            onClick = {
                             if (selectedChatUserId != null) selectedChatUserId = null
                             else if (selectedUserId != null) selectedUserId = null
                             else if (showNotifications) showNotifications = false
                             else if (showSearch) showSearch = false
                             else selectedItem = 0
+
                         }) {
                             Icon(
                                 painter = painterResource(R.drawable.baseline_arrow_back_ios_new_24),
-                                contentDescription = "Back"
+                                contentDescription = "More"
                             )
                         }
                     }
@@ -175,6 +178,7 @@ fun DashboardBody() {
             NavigationBar {
                 navList.forEachIndexed { index, item ->
                     NavigationBarItem(
+                        modifier = Modifier.testTag("bottomNav_${item.label}"),
                         icon = {
                             Icon(
                                 painter = painterResource(item.icon),
@@ -300,6 +304,7 @@ fun DashboardBody() {
             },
             confirmButton = {
                 Button(
+                    modifier = Modifier.testTag("deletePermanentlyButton"),
                     onClick = {
                         showDeleteDialog = false
                         if (currentUserId.isNotEmpty()) {
@@ -349,7 +354,8 @@ fun DashboardBody() {
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showDeleteDialog = false }
+                    onClick = { showDeleteDialog = false },
+                    modifier = Modifier.testTag("cancelDeleteButton")
                 ) {
                     Text("Cancel", color = Color.Gray)
                 }
