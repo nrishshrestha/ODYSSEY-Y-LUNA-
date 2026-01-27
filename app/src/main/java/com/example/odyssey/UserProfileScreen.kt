@@ -3,16 +3,20 @@ package com.example.odyssey
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
@@ -30,10 +34,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.odyssey.ViewModel.UserViewModel
+import com.example.odyssey.ViewModel.CreateRouteViewModel
 import com.example.odyssey.model.UserModel
+import com.example.odyssey.model.RouteModel
 import com.example.odyssey.repository.FriendRepoImpl
 import com.example.odyssey.repository.UserRepoImpl
 import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.viewmodel.compose.viewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class UserProfileScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,21 +56,51 @@ class UserProfileScreen : ComponentActivity() {
     }
 }
 
+fun formatDuration(ms: Long): String {
+    val totalSeconds = ms / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+}
+
+fun formatDate(epochMs: Long): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+    return sdf.format(Date(epochMs))
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
+fun UserProfileBody(
+    targetUserId: String? = null,
+    showTopBar: Boolean = true,
+    onMessageClick: (String, String) -> Unit = { _, _ -> }
+) {
     val context = LocalContext.current
     val currentUser = FirebaseAuth.getInstance().currentUser
     val currentUserId = currentUser?.uid ?: ""
-    
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+
     // Determine if we are looking at our own profile or someone else's
     val isOwnProfile = targetUserId == null || targetUserId == currentUserId
     val effectiveUserId = targetUserId ?: currentUserId
 
     val userViewModel = remember { UserViewModel(UserRepoImpl(), FriendRepoImpl(UserRepoImpl())) }
-    
+
     val userData by if (isOwnProfile) userViewModel.user.observeAsState() else userViewModel.otherUser.observeAsState()
     val isFollowing by userViewModel.isFollowing.observeAsState(false)
+    val followersCount by userViewModel.followersCount.observeAsState(0)
+    val followingCount by userViewModel.followingCount.observeAsState(0)
+
+    val createRouteViewModel: CreateRouteViewModel = viewModel()
+    val userRoutes by createRouteViewModel.userRoutes.observeAsState(emptyList())
+
+    LaunchedEffect(effectiveUserId) {
+        if (effectiveUserId.isNotBlank()) {
+            createRouteViewModel.getRoutesByUser(effectiveUserId)
+        }
+    }
 
     var name by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
@@ -93,7 +133,7 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
                 .padding(paddingValues)
         ) {
 
-            ProfileHeader(profileImageUrl)
+            ProfileHeader(profileImageUrl, followersCount, followingCount)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -106,19 +146,26 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
                 isFollowing = isFollowing,
                 onEditClick = { showEditDialog = true },
                 onFollowClick = {
-                    userViewModel.followUser(currentUserId, effectiveUserId) { success, message ->
+                    userViewModel.followUser(currentUserId, effectiveUserId) { _, message ->
                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     }
+                },
+                onMessageClick = {
+                    onMessageClick(effectiveUserId, name)
                 }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             TabSection()
-            PostGrid()
+            PostGrid(
+                routes = userRoutes,
+                effectiveUserId = effectiveUserId,
+                createRouteViewModel = createRouteViewModel,
+                isOwnProfile = isOwnProfile
+            )
         }
     }
-
     if (showTopBar) {
         Scaffold(
             topBar = {
@@ -127,7 +174,9 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
                         Text(userData?.email ?: "Profile", fontWeight = FontWeight.Bold)
                     },
                     navigationIcon = {
-                        IconButton(onClick = {}) {
+                        IconButton(onClick = {
+                            backDispatcher?.onBackPressed()
+                        }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                         }
                     },
@@ -148,6 +197,7 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
     if (showEditDialog && userData != null && isOwnProfile) {
         EditProfileDialog(
             userModel = userData!!,
+            userViewModel = userViewModel,
             onSave = { updatedModel ->
                 userViewModel.editProfile(currentUserId, updatedModel) { success, message ->
                     if (success) {
@@ -164,7 +214,7 @@ fun UserProfileBody(targetUserId: String? = null, showTopBar: Boolean = true) {
 }
 
 @Composable
-fun ProfileHeader(imageUrl: String) {
+fun ProfileHeader(imageUrl: String, followers: Int, following: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,9 +237,9 @@ fun ProfileHeader(imageUrl: String) {
             modifier = Modifier.weight(3f),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            UserStats("Trips", "125")
-            UserStats("Followers", "1.2k")
-            UserStats("Following", "350")
+            UserStats("Trips", "0")
+            UserStats("Followers", followers.toString())
+            UserStats("Following", following.toString())
         }
     }
 }
@@ -215,7 +265,8 @@ fun ProfileActions(
     isOwnProfile: Boolean,
     isFollowing: Boolean,
     onEditClick: () -> Unit,
-    onFollowClick: () -> Unit
+    onFollowClick: () -> Unit,
+    onMessageClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -261,7 +312,7 @@ fun ProfileActions(
             }
 
             Button(
-                onClick = {},
+                onClick = onMessageClick,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -278,6 +329,7 @@ fun ProfileActions(
 @Composable
 fun EditProfileDialog(
     userModel: UserModel,
+    userViewModel: UserViewModel,
     onSave: (UserModel) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -285,6 +337,18 @@ fun EditProfileDialog(
     var lastName by remember { mutableStateOf(userModel.lastName) }
     var bio by remember { mutableStateOf(userModel.bio) }
     var imageUrl by remember { mutableStateOf(userModel.imageUrl) }
+    val context = LocalContext.current
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            userViewModel.uploadImage(context, it)
+            // Note: The UI will update automatically via the getUserByID listener
+            // once Firebase updates, but we can set it locally for instant feedback if needed.
+            imageUrl = it.toString()
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -292,39 +356,50 @@ fun EditProfileDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                AsyncImage(
-                    model = imageUrl.ifEmpty { "https://via.placeholder.com/150" },
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .align(Alignment.CenterHorizontally),
-                    contentScale = ContentScale.Crop
-                )
+                Box(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    AsyncImage(
+                        model = imageUrl.ifEmpty { "https://via.placeholder.com/150" },
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, Color(0xFF3460FB), CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                }
 
-                OutlinedTextField(
-                    value = imageUrl,
-                    onValueChange = { imageUrl = it },
-                    label = { Text("Profile Picture URL") }
-                )
+                Button(
+                    onClick = { galleryLauncher.launch("image/*") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE3F2FD), contentColor = Color(0xFF3460FB))
+                ) {
+                    Text("Change Profile Picture")
+                }
 
                 OutlinedTextField(
                     value = firstName,
                     onValueChange = { firstName = it },
-                    label = { Text("First Name") }
+                    label = { Text("First Name") },
+                    modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 OutlinedTextField(
                     value = lastName,
                     onValueChange = { lastName = it },
-                    label = { Text("Last Name") }
+                    label = { Text("Last Name") },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
                     value = bio,
                     onValueChange = { bio = it },
                     label = { Text("Bio") },
-                    maxLines = 4
+                    maxLines = 4,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
@@ -366,26 +441,64 @@ fun TabSection() {
 }
 
 @Composable
-fun PostGrid() {
-    val dummyImages = List(15) {
-        "https://picsum.photos/seed/${it + 40}/300/300"
-    }
+fun PostGrid(
+    routes: List<RouteModel>,
+    effectiveUserId: String,
+    createRouteViewModel: CreateRouteViewModel,
+    isOwnProfile: Boolean
+) {
+    // 1. Capture the context here, at the top level of the Composable
+    val context = LocalContext.current
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(text = "Trips", modifier = Modifier.padding(horizontal = 16.dp))
+
+    LazyColumn(
         modifier = Modifier
-            .fillMaxWidth(),
-        contentPadding = PaddingValues(1.dp),
-        horizontalArrangement = Arrangement.spacedBy(1.dp),
-        verticalArrangement = Arrangement.spacedBy(1.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
     ) {
-        items(dummyImages.size) {
-            AsyncImage(
-                model = dummyImages[it],
-                contentDescription = null,
-                modifier = Modifier.aspectRatio(1f),
-                contentScale = ContentScale.Crop
-            )
+        items(routes.size) { index ->
+            val route = routes[index]
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp)
+            ) {
+                Row {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(16.dp)
+                    ) {
+                        Text(route.title.ifEmpty { "Untitled route" })
+                        Text("Duration: ${formatDuration(route.duration)}")
+                        Text("Distance: ${"%.2f".format(route.totalDistance)} m")
+                        Text("Date: ${formatDate(route.createdAt)}")
+                    }
+
+                    if (isOwnProfile) {
+                        Column(
+                            modifier = Modifier.padding(8.dp),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            IconButton(onClick = {
+                                createRouteViewModel.deleteRoute(route.routeId) { success, message ->
+                                    // 2. Use the captured 'context' variable here
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                    if (success) {
+                                        createRouteViewModel.getRoutesByUser(effectiveUserId)
+                                    }
+                                }
+                            }) {
+                                Icon(Icons.Default.Delete, null, tint = Color.Red)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -260,4 +260,32 @@ class FriendRepoImpl(
             }
         }
     }
+
+    override fun getFollowersCount(userId: String, callback: (Int) -> Unit) {
+        ref.orderByChild("toUserId").equalTo(userId).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val count = snapshot.children.count { 
+                    it.child("status").value == "accepted" 
+                }
+                callback(count)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                callback(0)
+            }
+        })
+    }
+
+    override fun getFollowingCount(userId: String, callback: (Int) -> Unit) {
+        ref.orderByChild("fromUserId").equalTo(userId).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val count = snapshot.children.count { 
+                    it.child("status").value == "accepted" 
+                }
+                callback(count)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                callback(0)
+            }
+        })
+    }
 }
