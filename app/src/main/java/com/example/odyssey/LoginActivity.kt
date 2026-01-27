@@ -71,7 +71,6 @@ class LoginActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 fun LoginBody() {
     val keyBoardController = LocalSoftwareKeyboardController.current

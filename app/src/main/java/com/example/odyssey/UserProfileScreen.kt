@@ -161,7 +161,8 @@ fun UserProfileBody(
             PostGrid(
                 routes = userRoutes,
                 effectiveUserId = effectiveUserId,
-                createRouteViewModel = createRouteViewModel
+                createRouteViewModel = createRouteViewModel,
+                isOwnProfile = isOwnProfile
             )
         }
     }
@@ -443,7 +444,8 @@ fun TabSection() {
 fun PostGrid(
     routes: List<RouteModel>,
     effectiveUserId: String,
-    createRouteViewModel: CreateRouteViewModel
+    createRouteViewModel: CreateRouteViewModel,
+    isOwnProfile: Boolean
 ) {
     // 1. Capture the context here, at the top level of the Composable
     val context = LocalContext.current
@@ -477,20 +479,22 @@ fun PostGrid(
                         Text("Date: ${formatDate(route.createdAt)}")
                     }
 
-                    Column(
-                        modifier = Modifier.padding(8.dp),
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        IconButton(onClick = {
-                            createRouteViewModel.deleteRoute(route.routeId) { success, message ->
-                                // 2. Use the captured 'context' variable here
-                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                                if (success) {
-                                    createRouteViewModel.getRoutesByUser(effectiveUserId)
+                    if (isOwnProfile) {
+                        Column(
+                            modifier = Modifier.padding(8.dp),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            IconButton(onClick = {
+                                createRouteViewModel.deleteRoute(route.routeId) { success, message ->
+                                    // 2. Use the captured 'context' variable here
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                    if (success) {
+                                        createRouteViewModel.getRoutesByUser(effectiveUserId)
+                                    }
                                 }
+                            }) {
+                                Icon(Icons.Default.Delete, null, tint = Color.Red)
                             }
-                        }) {
-                            Icon(Icons.Default.Delete, null, tint = Color.Red)
                         }
                     }
                 }
