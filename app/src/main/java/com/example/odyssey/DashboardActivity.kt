@@ -166,7 +166,8 @@ fun DashboardBody() {
                         onDeleteAccountClick = {
                             showDeleteDialog = true
                         },
-                        unreadCount = unreadCount
+                        unreadCount = unreadCount,
+                        hideSearch = showSearch || (selectedItem == 3 && !showNotifications && selectedChatUserId == null && selectedUserId == null)
                     )
                 }
             )
@@ -231,12 +232,24 @@ fun DashboardBody() {
                 )
             } else {
                 when (selectedItem) {
-                    0 -> HomeScreen()
+                    0 -> HomeScreen(
+                        onStartTripClick = { selectedItem = 2 },
+                        onChatClick = { selectedItem = 3 }
+                    )
                     1 -> Text(text = "Trips")
                     2 -> CreateScreen()
-                    3 -> FriendsScreen(onUserClick = { userId ->
-                        selectedUserId = userId
-                    })
+                    3 -> FriendsScreen(
+                        onUserClick = { userId ->
+                            selectedUserId = userId
+                        },
+                        onChatClick = { userId, userName ->
+                            selectedChatUserId = userId
+                            selectedChatUserName = userName
+                        },
+                        onAddFriendClick = {
+                            showSearch = true
+                        }
+                    )
                     4 -> UserProfileBody(
                         showTopBar = false,
                         onMessageClick = { userId, userName ->
@@ -356,7 +369,8 @@ fun Header(
     onSearchClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onDeleteAccountClick: () -> Unit,
-    unreadCount: Int
+    unreadCount: Int,
+    hideSearch: Boolean = false
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -370,11 +384,13 @@ fun Header(
             Text("Let's Travel", fontSize = 14.sp, color = Color.Gray)
         }
         Row {
-            IconButton(onClick = onSearchClick) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_search_24),
-                    contentDescription = "Search"
-                )
+            if (!hideSearch) {
+                IconButton(onClick = onSearchClick) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_search_24),
+                        contentDescription = "Search"
+                    )
+                }
             }
             IconButton(onClick = onNotificationClick) {
                 BadgedBox(

@@ -17,7 +17,10 @@ class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
     fun initChat(currentUserId: String, currentUserName: String, toUserId: String) {
         Timber.tag("ChatViewModel").d("Initializing chat: $currentUserId -> $toUserId")
 
-        // Setup listener first to ensure we don't miss anything while logging in
+        // Clear existing messages when switching chats
+        _messages.value = emptyList()
+
+        // Setup listener first to ensure we don't miss anything
         repository.receiveMessages { newMessages ->
             Log.d("ChatViewModel", "Received ${newMessages.size} real-time messages")
             val current = _messages.value ?: emptyList()
@@ -29,6 +32,7 @@ class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
             }
 
             if (filteredNew.isNotEmpty()) {
+                // For real-time messages, we append them to the end
                 _messages.postValue(current + filteredNew)
             }
         }
@@ -39,6 +43,8 @@ class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
                 loadHistory(toUserId)
             } else {
                 Timber.tag("ChatViewModel").e("Login failed")
+                // Still try to load history even if login says already logged in or similar
+                loadHistory(toUserId)
             }
         }
     }
@@ -46,14 +52,18 @@ class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
     private fun loadHistory(userId: String) {
         repository.queryHistory(userId) { history ->
             Timber.tag("ChatViewModel").d("Loaded ${history.size} history messages")
-            // ZIM history is usually newest-first, we want oldest-first for the LazyColumn
-            _messages.postValue(history.reversed())
+            // ZIM queryHistory with reverse = true returns oldest first.
+            // repository.queryHistory uses reverse = true, so messageList is oldest first.
+            // We want oldest at the top, newest at the bottom for LazyColumn.
+            _messages.postValue(history)
         }
     }
 
     fun sendMessage(toUserId: String, text: String) {
         repository.sendMessage(toUserId, text) { success, _ ->
             if (success) {
+                // In a real app, the real-time listener should catch the sent message too if configured.
+                // If not, we manually add it.
                 val newMessage = ChatMessage(
                     senderId = "me", // Marker for local UI
                     message = text,
@@ -84,12 +94,13 @@ class ChatViewModel(private val repository: ChatRepo) : ViewModel() {
 
     private fun addLocalMessage(message: ChatMessage) {
         val current = _messages.value ?: emptyList()
-        _messages.postValue(current + message)
+        // Check if message already exists (e.g. if listener already caught it)
+        if (current.none { it.messageId == message.messageId }) {
+            _messages.postValue(current + message)
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
-        // Optional: logout if you want to close connection when VM dies
-        // repository.logout()
     }
 }
