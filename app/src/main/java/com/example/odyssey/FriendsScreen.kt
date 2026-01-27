@@ -33,7 +33,8 @@ import com.google.firebase.auth.FirebaseAuth
 @Composable
 fun FriendsScreen(
     onUserClick: (String) -> Unit = {},
-    onChatClick: (String, String) -> Unit = { _, _ -> }
+    onChatClick: (String, String) -> Unit = { _, _ -> },
+    onAddFriendClick: () -> Unit = {}
 ) {
     val friendViewModel: FriendViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
@@ -73,7 +74,7 @@ fun FriendsScreen(
                     color = Color.Black
                 )
             )
-            IconButton(onClick = { /* TODO: Search or Add Friends */ }) {
+            IconButton(onClick = onAddFriendClick) {
                 Icon(
                     painter = painterResource(R.drawable.baseline_add_24),
                     contentDescription = "Add Friend",

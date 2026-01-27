@@ -36,7 +36,11 @@ import com.google.firebase.auth.FirebaseAuth
 import java.util.Locale
 
 @Composable
-fun HomeScreen(routeViewModel: CreateRouteViewModel = viewModel()) {
+fun HomeScreen(
+    routeViewModel: CreateRouteViewModel = viewModel(),
+    onStartTripClick: () -> Unit = {},
+    onChatClick: () -> Unit = {}
+) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val auth = FirebaseAuth.getInstance()
@@ -149,7 +153,7 @@ fun HomeScreen(routeViewModel: CreateRouteViewModel = viewModel()) {
             totalDuration = formatDurationString(totalDurationMs)
         )
 
-        ActionButtons()
+        ActionButtons(onStartTripClick = onStartTripClick, onChatClick = onChatClick)
         
         Spacer(modifier = Modifier.height(20.dp))
     }
@@ -202,26 +206,28 @@ fun StatItem(value: String, label: String) {
 }
 
 @Composable
-fun ActionButtons() {
+fun ActionButtons(onStartTripClick: () -> Unit, onChatClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         OutlinedActionButton(
             text = "Start New Trip",
-            icon = R.drawable.baseline_directions_walk_24
+            icon = R.drawable.baseline_directions_walk_24,
+            onClick = onStartTripClick
         )
         OutlinedActionButton(
             text = "Chat",
-            icon = R.drawable.baseline_chat_24
+            icon = R.drawable.baseline_chat_24,
+            onClick = onChatClick
         )
     }
 }
 
 @Composable
-fun RowScope.OutlinedActionButton(text: String, icon: Int) {
+fun RowScope.OutlinedActionButton(text: String, icon: Int, onClick: () -> Unit) {
     OutlinedButton(
-        onClick = {},
+        onClick = onClick,
         modifier = Modifier
             .weight(1f)
             .height(56.dp),
