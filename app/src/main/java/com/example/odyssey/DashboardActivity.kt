@@ -116,7 +116,6 @@ fun DashboardBody() {
 
     val navList = listOf(
         NavItem("Home", R.drawable.baseline_home_24),
-        NavItem("Trips", R.drawable.baseline_map_24),
         NavItem("Create", R.drawable.baseline_add_24),
         NavItem("Friends", R.drawable.baseline_people_24),
         NavItem("Profile", R.drawable.baseline_person_24),
@@ -236,9 +235,8 @@ fun DashboardBody() {
                         onStartTripClick = { selectedItem = 2 },
                         onChatClick = { selectedItem = 3 }
                     )
-                    1 -> Text(text = "Trips")
-                    2 -> CreateScreen()
-                    3 -> FriendsScreen(
+                    1 -> CreateScreen()
+                    2 -> FriendsScreen(
                         onUserClick = { userId ->
                             selectedUserId = userId
                         },
@@ -250,7 +248,7 @@ fun DashboardBody() {
                             showSearch = true
                         }
                     )
-                    4 -> UserProfileBody(
+                    3 -> UserProfileBody(
                         showTopBar = false,
                         onMessageClick = { userId, userName ->
                             selectedChatUserId = userId
