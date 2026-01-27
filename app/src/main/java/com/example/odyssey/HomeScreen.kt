@@ -5,8 +5,6 @@ import android.content.pm.PackageManager
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,10 +32,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.odyssey.ViewModel.CreateRouteViewModel
-import com.example.odyssey.model.RouteModel
 import com.google.firebase.auth.FirebaseAuth
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -79,98 +74,84 @@ fun HomeScreen(routeViewModel: CreateRouteViewModel = viewModel()) {
         }
     }
 
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF5F6FA))
             .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 20.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                text = "Where you are",
-                fontWeight = FontWeight.Medium,
-                fontSize = 12.sp,
-                color = Color(0xD7363636)
-            )
-        }
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        Text(
+            text = "Where you are",
+            fontWeight = FontWeight.Medium,
+            fontSize = 12.sp,
+            color = Color(0xD7363636)
+        )
 
-        item {
-            AndroidView(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                factory = {
-                    mapView.apply {
-                        onCreate(null)
-                        getMapAsync { map ->
-                            val styleUrl =
-                                "https://api.baato.io/api/v1/styles/breeze?key=bpk.GUTSn6p8o-LVyDlQOu-S7HLs2gQgI5Y6zkvoAGVlDXMD"
+        AndroidView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp)
+                .clip(RoundedCornerShape(12.dp)),
+            factory = {
+                mapView.apply {
+                    onCreate(null)
+                    getMapAsync { map ->
+                        val styleUrl =
+                            "https://api.baato.io/api/v1/styles/breeze?key=bpk.GUTSn6p8o-LVyDlQOu-S7HLs2gQgI5Y6zkvoAGVlDXMD"
 
-                            map.setStyle(Style.Builder().fromUri(styleUrl)) {
-                                userLocation?.let { loc ->
-                                    map.addMarker(
-                                        MarkerOptions()
-                                            .position(loc)
-                                            .title("You are here")
-                                    )
-
-                                    map.cameraPosition =
-                                        CameraPosition.Builder()
-                                            .target(loc)
-                                            .zoom(15.0)
-                                            .build()
-                                }
-                            }
-                        }
-                    }
-                },
-                update = { view ->
-                    view.getMapAsync { map ->
-                        if (map.style?.isFullyLoaded == true) {
+                        map.setStyle(Style.Builder().fromUri(styleUrl)) {
                             userLocation?.let { loc ->
-                                map.clear()
                                 map.addMarker(
                                     MarkerOptions()
                                         .position(loc)
                                         .title("You are here")
                                 )
-                                map.animateCamera(
-                                    org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
-                                        loc,
-                                        15.0
-                                    ),
-                                    1000
-                                )
+
+                                map.cameraPosition =
+                                    CameraPosition.Builder()
+                                        .target(loc)
+                                        .zoom(15.0)
+                                        .build()
                             }
                         }
                     }
                 }
-            )
-        }
+            },
+            update = { view ->
+                view.getMapAsync { map ->
+                    if (map.style?.isFullyLoaded == true) {
+                        userLocation?.let { loc ->
+                            map.clear()
+                            map.addMarker(
+                                MarkerOptions()
+                                    .position(loc)
+                                    .title("You are here")
+                            )
+                            map.animateCamera(
+                                org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
+                                    loc,
+                                    15.0
+                                ),
+                                1000
+                            )
+                        }
+                    }
+                }
+            }
+        )
 
-        item {
-            val totalDurationMs = userRoutes.sumOf { it.duration }
-            StatsCard(
-                tripsCount = userRoutes.size.toString(),
-                totalDuration = formatDurationString(totalDurationMs)
-            )
-        }
+        val totalDurationMs = userRoutes.sumOf { it.duration }
+        StatsCard(
+            tripsCount = userRoutes.size.toString(),
+            totalDuration = formatDurationString(totalDurationMs)
+        )
 
-        item {
-            ActionButtons()
-        }
-
-        item {
-            TripsTitle()
-        }
-
-        items(userRoutes) { route ->
-            TripCard(route)
-        }
+        ActionButtons()
+        
+        Spacer(modifier = Modifier.height(20.dp))
     }
 
     DisposableEffect(lifecycle) {
@@ -222,30 +203,18 @@ fun StatItem(value: String, label: String) {
 
 @Composable
 fun ActionButtons() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedActionButton(
-                text = "Start New Trip",
-                icon = R.drawable.baseline_directions_walk_24
-            )
-            OutlinedActionButton(
-                text = "Add Note",
-                icon = R.drawable.baseline_event_note_24
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedActionButton(
-                text = "Chat",
-                icon = R.drawable.baseline_chat_24
-            )
-        }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        OutlinedActionButton(
+            text = "Start New Trip",
+            icon = R.drawable.baseline_directions_walk_24
+        )
+        OutlinedActionButton(
+            text = "Chat",
+            icon = R.drawable.baseline_chat_24
+        )
     }
 }
 
@@ -266,50 +235,6 @@ fun RowScope.OutlinedActionButton(text: String, icon: Int) {
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(text, color = Color.Black, fontSize = 13.sp)
-    }
-}
-
-@Composable
-fun TripsTitle() {
-    Text(
-        text = "Your Trips",
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold
-    )
-}
-
-@Composable
-fun TripCard(route: RouteModel) {
-    val date = SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(route.createdAt))
-    val durationText = formatDurationString(route.duration)
-    
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(route.title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "$date • $durationText",
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-            if (route.description.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = route.description,
-                    fontSize = 12.sp,
-                    color = Color.DarkGray,
-                    maxLines = 2
-                )
-            }
-        }
     }
 }
 
