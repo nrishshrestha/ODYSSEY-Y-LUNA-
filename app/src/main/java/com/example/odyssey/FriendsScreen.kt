@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -33,7 +32,8 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun FriendsScreen(
-    onUserClick: (String) -> Unit = {}
+    onUserClick: (String) -> Unit = {},
+    onChatClick: (String, String) -> Unit = { _, _ -> }
 ) {
     val friendViewModel: FriendViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
@@ -100,7 +100,8 @@ fun FriendsScreen(
                 items(friends) { friend ->
                     FriendCard(
                         friend = friend,
-                        onClick = { onUserClick(friend.userId) }
+                        onClick = { onUserClick(friend.userId) },
+                        onChatClick = { onChatClick(friend.userId, "${friend.firstName} ${friend.lastName}") }
                     )
                 }
             }
@@ -109,7 +110,7 @@ fun FriendsScreen(
 }
 
 @Composable
-fun FriendCard(friend: UserModel, onClick: () -> Unit) {
+fun FriendCard(friend: UserModel, onClick: () -> Unit, onChatClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -159,6 +160,16 @@ fun FriendCard(friend: UserModel, onClick: () -> Unit) {
                         maxLines = 1
                     )
                 }
+            }
+
+            // Message Icon
+            IconButton(onClick = onChatClick) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_chat_24),
+                    contentDescription = "Chat with ${friend.firstName}",
+                    tint = Color(0xFF2196F3),
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }

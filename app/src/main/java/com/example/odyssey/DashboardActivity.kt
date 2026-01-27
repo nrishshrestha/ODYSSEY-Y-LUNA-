@@ -234,9 +234,15 @@ fun DashboardBody() {
                     0 -> HomeScreen()
                     1 -> Text(text = "Trips")
                     2 -> CreateScreen()
-                    3 -> FriendsScreen(onUserClick = { userId ->
-                        selectedUserId = userId
-                    })
+                    3 -> FriendsScreen(
+                        onUserClick = { userId ->
+                            selectedUserId = userId
+                        },
+                        onChatClick = { userId, userName ->
+                            selectedChatUserId = userId
+                            selectedChatUserName = userName
+                        }
+                    )
                     4 -> UserProfileBody(
                         showTopBar = false,
                         onMessageClick = { userId, userName ->
