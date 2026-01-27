@@ -167,7 +167,7 @@ fun DashboardBody() {
                             showDeleteDialog = true
                         },
                         unreadCount = unreadCount,
-                        hideSearch = (selectedItem == 3 && !showNotifications && !showSearch && selectedChatUserId == null && selectedUserId == null)
+                        hideSearch = showSearch || (selectedItem == 3 && !showNotifications && selectedChatUserId == null && selectedUserId == null)
                     )
                 }
             )
