@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -138,7 +139,7 @@ fun LoginBody() {
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("email"),
                     shape = RoundedCornerShape(50.dp),
                     placeholder = { Text("E-mail ID") },
                     keyboardOptions = KeyboardOptions(
@@ -157,7 +158,7 @@ fun LoginBody() {
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("password"),
                     shape = RoundedCornerShape(50.dp),
                     placeholder = { Text("Password") },
                     trailingIcon = {
@@ -235,7 +236,7 @@ fun LoginBody() {
                         }
                     },
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth().testTag("login")
                         .height(55.dp),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -260,7 +261,7 @@ fun LoginBody() {
                         }
                     },
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth().testTag("register")
                         .clickable {
                             val intent =
                                 Intent(context, SignUpActivity::class.java)
