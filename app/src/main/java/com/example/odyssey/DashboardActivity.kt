@@ -44,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -383,6 +384,15 @@ fun Header(
             Text("Let's Travel", fontSize = 14.sp, color = Color.Gray)
         }
         Row {
+            if (!hideSearch) {
+                IconButton(onClick = onSearchClick,
+                    modifier = Modifier.testTag("search_icon")) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_search_24),
+                        contentDescription = "Search"
+                    )
+                }
+            }
             IconButton(onClick = onNotificationClick) {
                 BadgedBox(
                     badge = {
