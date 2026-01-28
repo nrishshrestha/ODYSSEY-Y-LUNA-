@@ -21,7 +21,7 @@ class SearchScreenUITest {
     fun testSearchFunctionality() {
         // 1. Perform Login
         // Assuming valid credentials for testing purposes.
-        composeRule.onNodeWithTag("email").performTextInput("sarita.nrish@example.com")
+        composeRule.onNodeWithTag("email").performTextInput("sarita.nrish@gmail.com")
         composeRule.onNodeWithTag("password").performTextInput("nrishshrestha")
         composeRule.onNodeWithTag("login_button").performClick()
 
