@@ -21,8 +21,8 @@ class SearchScreenUITest {
     fun testSearchFunctionality() {
         // 1. Perform Login
         // Assuming valid credentials for testing purposes.
-        composeRule.onNodeWithTag("email").performTextInput("test@example.com")
-        composeRule.onNodeWithTag("password").performTextInput("password123")
+        composeRule.onNodeWithTag("email").performTextInput("sarita.nrish@gmail.com")
+        composeRule.onNodeWithTag("password").performTextInput("nrihshshrestha")
         composeRule.onNodeWithTag("login_button").performClick()
 
         // 2. WAIT for the Dashboard to appear (specifically the search icon)
@@ -40,10 +40,10 @@ class SearchScreenUITest {
         // We click first to ensure focus, then type
         composeRule.onNodeWithTag("search_bar")
             .performClick()
-            .performTextInput("Everest Base Camp")
+            .performTextInput("Avsh Dulal")
 
         // 5. Verification
         composeRule.onNodeWithTag("search_bar")
-            .assertTextContains("Everest Base Camp")
+            .assertTextContains("Avsh Dulal")
     }
 }
