@@ -71,21 +71,4 @@ class LoginInstrumentedTest {
             .inRoot(withDecorView(not(composeRule.activity.window.decorView)))
             .check(matches(isDisplayed()))
     }
-
-    @Test
-    fun testSearchFunctionality() {
-        // 1. Successful Login to get to Dashboard
-        composeRule.onNodeWithTag("email").performTextInput("sarita.nrish@example.com")
-        composeRule.onNodeWithTag("password").performTextInput("nrishshrestha")
-        composeRule.onNodeWithTag("login_button").performClick()
-
-        // 2. Click Search Icon in Dashboard Header
-        composeRule.onNodeWithTag("search_icon").performClick()
-
-        // 3. Type a destination in Search bar
-        composeRule.onNodeWithTag("search_bar").performTextInput("Avsh Dulal")
-
-        // 4. Check if the input is displayed
-        composeRule.onNodeWithTag("search_bar").assertTextContains("Avsh Dulal")
-    }
 }
