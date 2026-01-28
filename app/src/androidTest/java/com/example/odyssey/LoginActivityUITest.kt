@@ -40,7 +40,7 @@ class LoginInstrumentedTest {
     fun testSuccessfulLogin_navigatesToSignUp() {
         // 1. Enter Email
         composeRule.onNodeWithTag("email")
-            .performTextInput("sarita.nrish@gmail.com")
+            .performTextInput("sarita.nrish@example.com")
 
         // 2. Enter Password
         composeRule.onNodeWithTag("password")

@@ -22,7 +22,7 @@ class SearchScreenUITest {
         // 1. Perform Login
         // Assuming valid credentials for testing purposes.
         composeRule.onNodeWithTag("email").performTextInput("sarita.nrish@gmail.com")
-        composeRule.onNodeWithTag("password").performTextInput("nrihshshrestha")
+        composeRule.onNodeWithTag("password").performTextInput("nrishshrestha")
         composeRule.onNodeWithTag("login_button").performClick()
 
         // 2. WAIT for the Dashboard to appear (specifically the search icon)
