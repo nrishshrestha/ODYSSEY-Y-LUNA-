@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -82,7 +83,7 @@ fun SearchScreen(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth().testTag("search_bar"),
                 placeholder = { Text("Search by name...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 shape = RoundedCornerShape(12.dp),

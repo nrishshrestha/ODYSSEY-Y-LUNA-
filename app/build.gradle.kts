@@ -58,6 +58,13 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.1.0")
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
     implementation("com.github.ZEGOCLOUD:zego_inapp_chat_uikit_android:+")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test:rules:1.7.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.7.0") // Added for Toast checking
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -138,7 +139,7 @@ fun LoginBody() {
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("email"),
                     shape = RoundedCornerShape(50.dp),
                     placeholder = { Text("E-mail ID") },
                     keyboardOptions = KeyboardOptions(
@@ -157,7 +158,7 @@ fun LoginBody() {
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("password"),
                     shape = RoundedCornerShape(50.dp),
                     placeholder = { Text("Password") },
                     trailingIcon = {
@@ -236,7 +237,8 @@ fun LoginBody() {
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(55.dp),
+                        .height(55.dp)
+                        .testTag("login_button"),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF3460FB)
@@ -266,7 +268,8 @@ fun LoginBody() {
                                 Intent(context, SignUpActivity::class.java)
                             context.startActivity(intent)
                             activity.finish()
-                        },
+                        }
+                        .testTag("register"),
                     textAlign = TextAlign.Center
                 )
             }
