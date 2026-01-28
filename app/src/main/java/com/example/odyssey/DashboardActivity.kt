@@ -234,8 +234,8 @@ fun DashboardBody() {
             } else {
                 when (selectedItem) {
                     0 -> HomeScreen(
-                        onStartTripClick = { selectedItem = 2 },
-                        onChatClick = { selectedItem = 3 }
+                        onStartTripClick = { selectedItem = 1 },
+                        onChatClick = { selectedItem = 2 }
                     )
                     1 -> CreateScreen()
                     2 -> FriendsScreen(
